@@ -1,0 +1,163 @@
+// Variables used by Scriptable.
+// These must be at the very top of the file. Do not edit.
+// icon-color: deep-gray; icon-glyph: magic;
+// Licence: Robert Koch-Institut (RKI), dl-de/by-2-0
+//
+
+const lineWeight = 2;
+const vertLineWeight = .5;
+const accentColor1 = new Color( '#33cc33', 1 );
+const accentColor2 = Color.lightGray();
+
+const apiUrl = ( location ) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_Landkreisdaten/FeatureServer/0/query?where=1%3D1&outFields=GEN,cases,deaths,cases7_per_100k,cases7_bl_per_100k,BL&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
+const widgetHeight = 338;
+const widgetWidth = 720;
+const graphLow = 280;
+const graphHeight = 160;
+const spaceBetweenDays = 44.5;
+
+const saveIncidenceLatLon = ( location ) => {
+	let fm = FileManager.iCloud();
+	let path = fm.joinPath( fm.documentsDirectory(), 'covid19latlon.json' );
+	fm.writeString( path, JSON.stringify( location ) );
+};
+
+const getSavedIncidenceLatLon = () => {
+	let fm = FileManager.iCloud();
+	let path = fm.joinPath( fm.documentsDirectory(), 'covid19latlon.json' );
+	let data = fm.readString( path );
+	return JSON.parse( data );
+};
+
+let drawContext = new DrawContext();
+drawContext.size = new Size( widgetWidth, widgetHeight );
+drawContext.opaque = false;
+
+let widget = await createWidget();
+widget.setPadding( 0, 0, 0, 0 );
+widget.backgroundImage = ( drawContext.getImage() );
+await widget.presentMedium();
+
+Script.setWidget( widget );
+Script.complete();
+
+async function createWidget( items ) {
+	let location;
+	
+	if ( args.widgetParameter ) {
+		console.log( 'get fixed lat/lon' );
+		const fixedCoordinates = args.widgetParameter.split( ',' ).map( parseFloat );
+		location = {
+			latitude: fixedCoordinates[ 0 ],
+			longitude: fixedCoordinates[ 1 ]
+		};
+	}
+	else {
+		Location.setAccuracyToThreeKilometers();
+		try {
+			location = await Location.current();
+			console.log( 'get current lat/lon' );
+			saveIncidenceLatLon( location );
+		}
+		catch ( e ) {
+			console.log( 'using saved lat/lon' );
+			location = getSavedIncidenceLatLon();
+		}
+	}
+	
+	const data = await new Request( apiUrl( location ) ).loadJSON();
+	
+	if ( ! data || ! data.features || ! data.features.length ) {
+		const errorList = new ListWidget();
+		errorList.addText( 'Keine Ergebnisse für den aktuellen Ort gefunden.' );
+		return errorList;
+	}
+	
+	const attr = data.features[ 0 ].attributes;
+	const cityName = attr.GEN;
+	const list = new ListWidget();
+	const date = new Date();
+	date.setDate( date.getDate() - 16 );
+	const minDate = ( '0' + ( date.getMonth() + 1 ) ).slice( -2 ) + '-' + ( '0' + date.getDate() ).slice( -2 ) + '-' + date.getFullYear();
+	const apiUrlData = `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/ArcGIS/rest/services/Covid19_RKI_Sums/FeatureServer/0/query?where=Landkreis+LIKE+%27%25${ encodeURIComponent( cityName ) }%25%27+AND+Meldedatum+%3E+%27${ encodeURIComponent( minDate ) }%27&objectIds=&time=&resultType=none&outFields=*&returnIdsOnly=false&returnUniqueIdsOnly=false&returnCountOnly=false&returnDistinctValues=false&cacheHint=false&orderByFields=Meldedatum&groupByFieldsForStatistics=&outStatistics=&having=&resultOffset=&resultRecordCount=&sqlFormat=none&f=json&token=`;
+	
+	const cityData = await new Request( apiUrlData ).loadJSON();
+	
+	if ( ! cityData || ! cityData.features || ! cityData.features.length ) {
+		const errorList = new ListWidget();
+		errorList.addText( 'Keine Statistik gefunden.' );
+		return errorList;
+	}
+	
+	drawContext.setFont( Font.mediumSystemFont( 26 ) );
+	drawContext.setTextColor( Color.white() );
+	drawContext.drawText( '🦠 Statistik'.toUpperCase() + ' ' + cityName, new Point( 25, 25 ) );
+	
+	drawContext.setTextAlignedCenter();
+	
+	let min, max, diff;
+	
+	for ( let i = 0; i < cityData.features.length; i++ ) {
+		let aux = cityData.features[ i ].attributes.AnzahlFall;
+		
+		min = ( aux < min || min == undefined ? aux : min );
+		max = ( aux > max || max == undefined ? aux : max );
+	}
+	
+	diff = max - min;
+	
+	const highestIndex = cityData.features.length - 1;
+	
+	for ( let i = 0, j = highestIndex; i < cityData.features.length; i++, j-- ) {
+		const day = ( new Date( cityData.features[ i ].attributes.Meldedatum ) ).getDate();
+		const dayOfWeek = ( new Date( cityData.features[ i ].attributes.Meldedatum ) ).getDay();
+		const cases = cityData.features[ i ].attributes.AnzahlFall;
+		const delta = ( cases - min ) / diff;
+		
+		if ( i < highestIndex ) {
+			const nextCases = cityData.features[ i + 1 ].attributes.AnzahlFall;
+			const nextDelta = ( nextCases - min ) / diff;
+			const point1 = new Point( spaceBetweenDays * i + 50, graphLow - ( graphHeight * delta ) );
+			const point2 = new Point( spaceBetweenDays * ( i + 1 ) + 50, graphLow - ( graphHeight * nextDelta ) );
+			drawLine( point1, point2, lineWeight, accentColor1 );
+		}
+		
+		// Vertical Line
+		const point1 = new Point( spaceBetweenDays * i + 50, graphLow - ( graphHeight * delta ) );
+		const point2 = new Point( spaceBetweenDays * i + 50, graphLow );
+		drawLine( point1, point2, vertLineWeight, accentColor2 );
+		
+		let dayColor;
+		
+		if ( dayOfWeek == 0 || dayOfWeek == 6 ) {
+			dayColor = accentColor2;
+		}
+		else {
+			dayColor = Color.white();
+		}
+		
+		const casesRect = new Rect( spaceBetweenDays * i + 20, ( graphLow - 40 ) - ( graphHeight * delta ), 60, 23 );
+		const dayRect = new Rect( spaceBetweenDays * i + 27, graphLow + 10, 50, 23 );
+		
+		drawTextR( cases, casesRect, dayColor, Font.systemFont( 22 ) );
+		drawTextR( day, dayRect, dayColor, Font.systemFont( 22 ) );
+	}
+	
+	return list;
+}
+
+function drawTextR( text, rect, color, font ) {
+	drawContext.setFont( font );
+	drawContext.setTextColor( color );
+	drawContext.drawTextInRect( new String( text ).toString(), rect );
+}
+
+function drawLine( point1, point2, width, color ) {
+	const path = new Path();
+	path.move( point1 );
+	path.addLine( point2 );
+	drawContext.addPath( path );
+	drawContext.setStrokeColor( color );
+	drawContext.setLineWidth( width );
+	drawContext.strokePath();
+}
