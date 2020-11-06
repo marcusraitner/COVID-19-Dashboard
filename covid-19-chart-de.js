@@ -89,8 +89,13 @@ async function createWidget( items ) {
 		return errorList;
 	}
 	
+	if ( Device.isUsingDarkAppearance() ) {
+		drawContext.setTextColor( Color.white() );
+	}
+	else {
+		drawContext.setTextColor( Color.black() );
+	}
 	drawContext.setFont( Font.mediumSystemFont( 26 ) );
-	drawContext.setTextColor( Color.white() );
 	drawContext.drawText( '🦠 Statistik'.toUpperCase() + ' ' + cityName, new Point( 25, 25 ) );
 	
 	drawContext.setTextAlignedCenter();
@@ -132,8 +137,11 @@ async function createWidget( items ) {
 		if ( dayOfWeek == 0 || dayOfWeek == 6 ) {
 			dayColor = accentColor2;
 		}
-		else {
+		else if ( Device.isUsingDarkAppearance() ) {
 			dayColor = Color.white();
+		}
+		else {
+			dayColor = Color.black();
 		}
 		
 		const casesRect = new Rect( spaceBetweenDays * i + 20, ( graphLow - 40 ) - ( graphHeight * delta ), 60, 23 );
