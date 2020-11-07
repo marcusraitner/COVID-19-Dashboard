@@ -4,6 +4,19 @@
 // Licence: Robert Koch-Institut (RKI), dl-de/by-2-0
 //
 
+// -------------
+// Configuration
+// -------------
+
+// the appearance of the widget.
+// supported values:
+// dark
+// light
+const APPEARANCE = 'dark';
+
+// ------------------------------
+// don't edit the following lines
+// ------------------------------
 const lineWeight = 2;
 const vertLineWeight = .5;
 const accentColor1 = new Color( '#33cc33', 1 );
@@ -89,7 +102,7 @@ async function createWidget( items ) {
 		return errorList;
 	}
 	
-	if ( Device.isUsingDarkAppearance() ) {
+	if ( APPEARANCE === 'dark' ) {
 		drawContext.setTextColor( Color.white() );
 	}
 	else {
@@ -137,7 +150,7 @@ async function createWidget( items ) {
 		if ( dayOfWeek == 0 || dayOfWeek == 6 ) {
 			dayColor = accentColor2;
 		}
-		else if ( Device.isUsingDarkAppearance() ) {
+		else if ( APPEARANCE === 'dark' ) {
 			dayColor = Color.white();
 		}
 		else {
