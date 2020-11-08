@@ -4,25 +4,12 @@
 // Licence: Robert Koch-Institut (RKI), dl-de/by-2-0
 //
 
-// -------------
-// Configuration
-// -------------
-
-// the appearance of the widget.
-// supported values:
-// dark
-// light
-const APPEARANCE = 'dark';
-
-// ------------------------------
-// don't edit the following lines
-// ------------------------------
 const lineWeight = 2;
 const vertLineWeight = .5;
 const accentColor1 = new Color( '#33cc33', 1 );
 const accentColor2 = Color.lightGray();
 
-const apiUrl = ( location ) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_Landkreisdaten/FeatureServer/0/query?where=1%3D1&outFields=GEN,cases,deaths,cases7_per_100k,cases7_bl_per_100k,BL&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
+const apiUrl = ( location ) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_Landkreisdaten/FeatureServer/0/query?where=1%3D1&outFields=GEN,cases,deaths,cases7_per_100k,cases7_bl_per_100k,BL,County&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
 const widgetHeight = 338;
 const widgetWidth = 720;
 const graphLow = 280;
@@ -82,32 +69,32 @@ async function createWidget( items ) {
 	
 	if ( ! data || ! data.features || ! data.features.length ) {
 		const errorList = new ListWidget();
+		errorList.backgroundColor = new Color( '#191a1d', 1 );
 		errorList.addText( 'Keine Ergebnisse für den aktuellen Ort gefunden.' );
 		return errorList;
 	}
 	
 	const attr = data.features[ 0 ].attributes;
 	const cityName = attr.GEN;
+	const county = attr.county;
 	const list = new ListWidget();
 	const date = new Date();
 	date.setDate( date.getDate() - 16 );
 	const minDate = ( '0' + ( date.getMonth() + 1 ) ).slice( -2 ) + '-' + ( '0' + date.getDate() ).slice( -2 ) + '-' + date.getFullYear();
-	const apiUrlData = `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/ArcGIS/rest/services/Covid19_RKI_Sums/FeatureServer/0/query?where=Landkreis+LIKE+%27%25${ encodeURIComponent( cityName ) }%25%27+AND+Meldedatum+%3E+%27${ encodeURIComponent( minDate ) }%27&objectIds=&time=&resultType=none&outFields=*&returnIdsOnly=false&returnUniqueIdsOnly=false&returnCountOnly=false&returnDistinctValues=false&cacheHint=false&orderByFields=Meldedatum&groupByFieldsForStatistics=&outStatistics=&having=&resultOffset=&resultRecordCount=&sqlFormat=none&f=json&token=`;
+	const apiUrlData = `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/ArcGIS/rest/services/Covid19_RKI_Sums/FeatureServer/0/query?where=Landkreis+LIKE+%27%25${ encodeURIComponent( county ) }%25%27+AND+Meldedatum+%3E+%27${ encodeURIComponent( minDate ) }%27&objectIds=&time=&resultType=none&outFields=*&returnIdsOnly=false&returnUniqueIdsOnly=false&returnCountOnly=false&returnDistinctValues=false&cacheHint=false&orderByFields=Meldedatum&groupByFieldsForStatistics=&outStatistics=&having=&resultOffset=&resultRecordCount=&sqlFormat=none&f=json&token=`;
 	
 	const cityData = await new Request( apiUrlData ).loadJSON();
 	
 	if ( ! cityData || ! cityData.features || ! cityData.features.length ) {
 		const errorList = new ListWidget();
+		errorList.backgroundColor = new Color( '#191a1d', 1 );
 		errorList.addText( 'Keine Statistik gefunden.' );
 		return errorList;
 	}
 	
-	if ( APPEARANCE === 'dark' ) {
-		drawContext.setTextColor( Color.white() );
-	}
-	else {
-		drawContext.setTextColor( Color.black() );
-	}
+	list.backgroundColor = new Color( '#191a1d', 1 );
+	
+	drawContext.setTextColor( Color.white() );
 	drawContext.setFont( Font.mediumSystemFont( 26 ) );
 	drawContext.drawText( '🦠 Statistik'.toUpperCase() + ' ' + cityName, new Point( 25, 25 ) );
 	
@@ -150,11 +137,8 @@ async function createWidget( items ) {
 		if ( dayOfWeek == 0 || dayOfWeek == 6 ) {
 			dayColor = accentColor2;
 		}
-		else if ( APPEARANCE === 'dark' ) {
-			dayColor = Color.white();
-		}
 		else {
-			dayColor = Color.black();
+			dayColor = Color.white();
 		}
 		
 		const casesRect = new Rect( spaceBetweenDays * i + 20, ( graphLow - 40 ) - ( graphHeight * delta ), 60, 23 );
