@@ -154,14 +154,29 @@ async function createWidget( items ) {
 		}
 	}
 	
-	drawOldData && drawChart( Object.values( oldData ), 'old' );
-	drawChart( Object.values( data ), 'current' );
+	// get minimal value of the current data
+	const currentData = Object.values( data );
+	let currentMin;
+	
+	for ( let i = 0; i < currentData.length; i++ ) {
+		let aux = currentData[ i ].AnzahlFall;
+		
+		currentMin = ( aux < currentMin || currentMin == undefined ? aux : currentMin );
+	}
+	
+	let oldMin;
+	
+	if ( drawOldData ) {
+		oldMin = drawChart( Object.values( oldData ), 'old', currentMin );
+	}
+	
+	drawChart( currentData, 'current', oldMin );
 	
 	return list;
 }
 
-function drawChart( dataArray, chartType ) {
-	let min, max, diff;
+function drawChart( dataArray, chartType, min ) {
+	let max = 0;
 	
 	for ( let i = 0; i < dataArray.length; i++ ) {
 		let aux = dataArray[ i ].AnzahlFall;
@@ -170,7 +185,7 @@ function drawChart( dataArray, chartType ) {
 		max = ( aux > max || max == undefined ? aux : max );
 	}
 	
-	diff = max - min;
+	let diff = max - min;
 	
 	const highestIndex = dataArray.length - 1;
 	
@@ -216,6 +231,8 @@ function drawChart( dataArray, chartType ) {
 			drawTextR( day, dayRect, dayColor, Font.systemFont( 22 ) );
 		}
 	}
+	
+	return min;
 }
 
 function drawTextR( text, rect, color, font ) {
