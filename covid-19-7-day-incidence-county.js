@@ -111,6 +111,8 @@ async function createWidget( items ) {
 
 	drawContext.setTextAlignedCenter();
 
+	let min, max, diff;
+	
 	// calculate incidence in place.
 	for ( let i = cityData.features.length - 1; i >= 6; i--) {
 		let sum = 0;
@@ -122,6 +124,9 @@ async function createWidget( items ) {
 		sum /= ewz;
 		cityData.features[ i ].attributes.AnzahlFall = Math.round(sum);
 	}
+	
+	cityData.features.splice(0, 6);
+
 
 	for ( let i = 0; i < cityData.features.length; i++ ) {
 		let aux = cityData.features[ i ].attributes.AnzahlFall;
