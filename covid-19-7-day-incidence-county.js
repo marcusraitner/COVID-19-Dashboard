@@ -14,10 +14,10 @@ const accentColor1 = new Color('#33cc33', 1);
 const accentColor2 = Color.lightGray();
 
 // colors for incidence highlighting
-const colorLow = new Color('#8CBA51', 1); // < 50
-const colorMed = new Color('#F5E027', 1); // < 100
-const colorHigh = new Color('#E20338', 1); // < 200
-const colorUltra = new Color('#922D25', 1); // >= 200
+const colorLow = new Color('#FAD643', 1); // < 50
+const colorMed = new Color('#E8B365', 1); // < 100
+const colorHigh = new Color('#DD5045', 1); // < 200
+const colorUltra = new Color('#8E0000', 1); // >= 200
 
 const apiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_Landkreisdaten/FeatureServer/0/query?where=1%3D1&outFields=GEN,EWZ,cases,deaths,cases7_per_100k,cases7_bl_per_100k,BL,county&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
 const widgetHeight = 338;
