@@ -119,7 +119,7 @@ async function createWidget( items ) {
 			sum += cityData.features[ i - j ].attributes.AnzahlFall;
 		}
 
-		sum /= EWZ;
+		sum /= ewz;
 		cityData.features[ i ].attributes.AnzahlFall = Math.round(sum);
 	}
 
