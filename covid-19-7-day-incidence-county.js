@@ -180,10 +180,11 @@ async function createWidget(items) {
   for (let i = 0; i < cityData.features.length; i++) {
     let aux = cityData.features[i].attributes.AnzahlFall;
 
-    min = (aux < min || min == undefined ? aux : min);
+    // min = (aux < min || min == undefined ? aux : min);
     max = (aux > max || max == undefined ? aux : max);
   }
 
+  min = 0;
   diff = max - min;
 
   const highestIndex = cityData.features.length - 1;
