@@ -123,7 +123,16 @@ async function createWidget(items) {
     return errorList;
   }
 
-  list.backgroundColor = new Color('#191a1d', 1);
+  let gradient = new LinearGradient();
+  gradient.locations = [0, 1];
+  gradient.colors = [
+    new Color("141414"),
+    new Color("13233F")
+  ];
+  
+  list.backgroundGradient = gradient;
+
+  // list.backgroundColor = new Color('#191a1d', 1);
 
   drawContext.setTextColor(Color.white());
   drawContext.setFont(Font.mediumSystemFont(26));
