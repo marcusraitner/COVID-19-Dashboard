@@ -4,9 +4,6 @@
 // Licence: Robert Koch-Institut (RKI), dl-de/by-2-0
 //
 
-// ---------------------------
-// do not edit after this line
-// ---------------------------
 const DAY_IN_MICROSECONDS = 86400000;
 const lineWeight = 2;
 const vertLineWeight = 36;
@@ -21,6 +18,8 @@ const colorUltra = new Color('#8E0000', 1); // >= 200
 
 const apiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_Landkreisdaten/FeatureServer/0/query?where=1%3D1&outFields=GEN,EWZ,cases,death_rate,deaths,cases7_per_100k,cases7_bl_per_100k,BL,county&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
 
+const apiUrlData = (county, minDate) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/Covid19_RKI_Sums/FeatureServer/0/query?where=Landkreis+LIKE+%27%25${ encodeURIComponent( county ) }%25%27+AND+Meldedatum+%3E+%27${ encodeURIComponent( minDate ) }%27&objectIds=&time=&resultType=none&outFields=*&returnIdsOnly=false&returnUniqueIdsOnly=false&returnCountOnly=false&returnDistinctValues=false&cacheHint=false&orderByFields=Meldedatum&groupByFieldsForStatistics=&outStatistics=&having=&resultOffset=&resultRecordCount=&sqlFormat=none&f=json&token=`;
+
 const diviApiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/DIVI_Intensivregister_Landkreise/FeatureServer/0/query?where=1%3D1&outFields=*&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
 
 const widgetHeight = 338;
@@ -32,7 +31,6 @@ const bedsGraphBaseline = 290;
 const bedsPaddingLeft = 32;
 const bedsPaddingRight = 32;
 const bedsLineWidth = 12;
-
 
 const saveIncidenceLatLon = (location) => {
   let fm = FileManager.iCloud();
@@ -47,13 +45,7 @@ const getSavedIncidenceLatLon = () => {
   return JSON.parse(data);
 };
 
-let drawContext = new DrawContext();
-drawContext.size = new Size(widgetWidth, widgetHeight);
-drawContext.opaque = false;
-
 let widget = await createWidget();
-widget.setPadding(0, 0, 0, 0);
-widget.backgroundImage = (drawContext.getImage());
 await widget.presentMedium();
 
 Script.setWidget(widget);
@@ -61,7 +53,11 @@ Script.complete();
 
 async function createWidget(items) {
   let location;
+  const list = new ListWidget();
+  list.backgroundColor = new Color('#191a1d', 1);
+  list.setPadding(8, 10, 0, 10);
 
+  // get current location or use given args
   if (args.widgetParameter) {
     console.log('get fixed lat/lon');
     const fixedCoordinates = args.widgetParameter.split(',').map(parseFloat);
@@ -81,54 +77,55 @@ async function createWidget(items) {
     }
   }
 
+  // get data for current location
   const locationData = await new Request(apiUrl(location)).loadJSON();
 
   if (!locationData || !locationData.features || !locationData.features.length) {
-    const errorList = new ListWidget();
-    errorList.backgroundColor = new Color('#191a1d', 1);
-    errorList.addText('Keine Ergebnisse für den aktuellen Ort gefunden.');
-    return errorList;
-  }
-
-  const diviLocationData = await new Request(diviApiUrl(location)).loadJSON();
-
-  if (!diviLocationData || !diviLocationData.features || !diviLocationData.features.length) {
-    const errorList = new ListWidget();
-    errorList.backgroundColor = new Color('#191a1d', 1);
-    errorList.addText('Keine DIVI-Ergebnisse für den aktuellen Ort gefunden.');
-    return errorList;
+    list.addText('Keine Ergebnisse für den aktuellen Ort gefunden.');
+    return list;
   }
 
   const attr = locationData.features[0].attributes;
+
+  // get data for ICU beds of current location
+  const diviLocationData = await new Request(diviApiUrl(location)).loadJSON();
+
+  if (!diviLocationData || !diviLocationData.features || !diviLocationData.features.length) {
+    list.addText('Keine DIVI-Ergebnisse für den aktuellen Ort gefunden.');
+    return list;
+  }
+
   const diviAttr = diviLocationData.features[0].attributes;
-  const cityName = attr.GEN;
-  const ewz = attr.EWZ / 100000;
-  const county = attr.county;
+
+  // extract information needed
+  const cityName = attr.GEN; // name of 'Landkreis'
+  const ewz = attr.EWZ / 100000; // number of inhabitants
+  const county = attr.county; // Landkreis
   const freeBeds = diviAttr.betten_frei;
   const beds = diviAttr.betten_gesamt;
   const usedBeds = diviAttr.betten_belegt;
   const cases = diviAttr.faelle_covid_aktuell;
-  const list = new ListWidget();
+
+  // get data for the last 21 days
   const date = new Date();
   date.setTime(date.getTime() - 21 * DAY_IN_MICROSECONDS);
   const minDate = ('0' + (date.getMonth() + 1)).slice(-2) + '-' + ('0' + date.getDate()).slice(-2) + '-' + date.getFullYear();
-  const apiUrlData = `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/Covid19_RKI_Sums/FeatureServer/0/query?where=Landkreis+LIKE+%27%25${ encodeURIComponent( county ) }%25%27+AND+Meldedatum+%3E+%27${ encodeURIComponent( minDate ) }%27&objectIds=&time=&resultType=none&outFields=*&returnIdsOnly=false&returnUniqueIdsOnly=false&returnCountOnly=false&returnDistinctValues=false&cacheHint=false&orderByFields=Meldedatum&groupByFieldsForStatistics=&outStatistics=&having=&resultOffset=&resultRecordCount=&sqlFormat=none&f=json&token=`;
 
-  const cityData = await new Request(apiUrlData).loadJSON();
+  const countyData = await new Request(apiUrlData(county, minDate)).loadJSON();
 
-  if (!cityData || !cityData.features || !cityData.features.length) {
-    const errorList = new ListWidget();
-    errorList.backgroundColor = new Color('#191a1d', 1);
-    errorList.addText('Keine Statistik gefunden.');
-    return errorList;
+  if (!countyData || !countyData.features || !countyData.features.length) {
+    list.addText('Keine Statistik gefunden.');
+    return list;
   }
 
-  list.backgroundColor = new Color('#191a1d', 1);
+  // draw graph
+  let drawContext = new DrawContext();
+  drawContext.size = new Size(widgetWidth, widgetHeight);
+  drawContext.opaque = false;
 
   drawContext.setTextColor(Color.white());
   drawContext.setFont(Font.mediumSystemFont(26));
-  drawContext.drawText('🦠 7-Tage-Inzidenz'.toUpperCase() + ' ' + cityName, new Point(25, 25));
-
+  drawContext.drawText('🦠 7-Tage-Inzidenz'.toUpperCase() + ' ' + county, new Point(25, 25));
 
   //  Draw graph for ICU beds
   const bedsRight = widgetWidth - bedsPaddingRight;
@@ -163,22 +160,22 @@ async function createWidget(items) {
   let min, max, diff;
 
   // calculate incidence in place.
-  for (let i = cityData.features.length - 1; i >= 6; i--) {
+  for (let i = countyData.features.length - 1; i >= 6; i--) {
     let sum = 0;
 
     for (let j = 0; j < 7; j++) {
-      sum += cityData.features[i - j].attributes.AnzahlFall;
+      sum += countyData.features[i - j].attributes.AnzahlFall;
     }
 
     sum /= ewz;
-    cityData.features[i].attributes.AnzahlFall = Math.round(sum);
+    countyData.features[i].attributes.AnzahlFall = Math.round(sum);
   }
 
-  cityData.features.splice(0, 6);
+  countyData.features.splice(0, 6);
 
 
-  for (let i = 0; i < cityData.features.length; i++) {
-    let aux = cityData.features[i].attributes.AnzahlFall;
+  for (let i = 0; i < countyData.features.length; i++) {
+    let aux = countyData.features[i].attributes.AnzahlFall;
 
     // min = (aux < min || min == undefined ? aux : min);
     max = (aux > max || max == undefined ? aux : max);
@@ -187,12 +184,12 @@ async function createWidget(items) {
   min = 0;
   diff = max - min;
 
-  const highestIndex = cityData.features.length - 1;
+  const highestIndex = countyData.features.length - 1;
 
-  for (let i = 0, j = highestIndex; i < cityData.features.length; i++, j--) {
-    const day = (new Date(cityData.features[i].attributes.Meldedatum)).getDate();
-    const dayOfWeek = (new Date(cityData.features[i].attributes.Meldedatum)).getDay();
-    const cases = cityData.features[i].attributes.AnzahlFall;
+  for (let i = 0, j = highestIndex; i < countyData.features.length; i++, j--) {
+    const day = (new Date(countyData.features[i].attributes.Meldedatum)).getDate();
+    const dayOfWeek = (new Date(countyData.features[i].attributes.Meldedatum)).getDay();
+    const cases = countyData.features[i].attributes.AnzahlFall;
     const delta = (cases - min) / diff;
 
     // Vertical Line
@@ -228,6 +225,7 @@ async function createWidget(items) {
     drawTextR(day, dayRect, dayColor, Font.systemFont(21));
   }
 
+  list.addImage(drawContext.getImage());
   return list;
 }
 
