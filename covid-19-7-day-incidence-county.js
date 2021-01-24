@@ -240,7 +240,7 @@ async function createWidget(items) {
       graphDrawContext.setStrokeColor(drawColor);
       graphDrawContext.strokePath();
 
-      drawLine(graphDrawContext, new Point(spaceBetweenDays * i, y), new Point(widgetWidth, y), 2, Color.white());
+      drawLine(graphDrawContext, new Point(spaceBetweenDays * i + vertLineWeight - 5, y), new Point(widgetWidth, y), 2, Color.white());
       const bundesLandRect = new Rect(spaceBetweenDays * (i + 1) + spaceBetweenDays / 3, y + 3, vertLineWeight, 23);
       drawTextR(graphDrawContext, bundesLand, bundesLandRect, dayColor, Font.mediumSystemFont(21));
       const bundesLandIncidenceRect = new Rect(spaceBetweenDays * (i + 1) + spaceBetweenDays / 3, y - 28, vertLineWeight, 23);
