@@ -84,7 +84,8 @@ async function createWidget(items) {
       location = await Location.current();
       console.log('get current lat/lon');
     } catch (e) {
-      list.addText('Keine Ortsdaten gefunden');
+      errorText = list.addText('Keine Ortsdaten gefunden');
+      errorText.setTextColor = new Color.white();
       return list;
     }
   }
@@ -93,7 +94,8 @@ async function createWidget(items) {
   const locationData = await new Request(apiUrl(location)).loadJSON();
 
   if (!locationData || !locationData.features || !locationData.features.length) {
-    list.addText('Keine Ergebnisse für den aktuellen Ort gefunden.');
+    errorText = list.addText('Keine Ergebnisse für den aktuellen Ort gefunden.');
+    errorText.setTextColor = new Color.white();
     return list;
   }
 
@@ -103,7 +105,8 @@ async function createWidget(items) {
   const diviLocationData = await new Request(diviApiUrl(location)).loadJSON();
 
   if (!diviLocationData || !diviLocationData.features || !diviLocationData.features.length) {
-    list.addText('Keine DIVI-Ergebnisse für den aktuellen Ort gefunden.');
+    errorText = list.addText('Keine DIVI-Ergebnisse für den aktuellen Ort gefunden.');
+    errorText.setTextColor = new Color.white();
     return list;
   }
 
@@ -221,6 +224,15 @@ async function createWidget(items) {
     if (i == countyData.features.length - 1) {
       const delta = (incidenceBl - min) / diff;
       const y = graphBottom - (barHeight * delta);
+      const x1 = spaceBetweenDays * (i + 1) + spaceBetweenDays / 3;
+
+      let x0;
+
+      if (y >= casesRect.origin.y -5 && y <= casesRect.origin.y + casesRect.height + 5) {
+        x0 = spaceBetweenDays * i + vertLineWeight;
+      } else {
+        x0 = spaceBetweenDays * i
+      }
 
       if (incidenceBl < 50) {
         drawColor = colorLow;
@@ -240,10 +252,12 @@ async function createWidget(items) {
       graphDrawContext.setStrokeColor(drawColor);
       graphDrawContext.strokePath();
 
-      drawLine(graphDrawContext, new Point(spaceBetweenDays * i + vertLineWeight - 5, y), new Point(widgetWidth, y), 2, Color.white());
-      const bundesLandRect = new Rect(spaceBetweenDays * (i + 1) + spaceBetweenDays / 3, y + 3, vertLineWeight, 23);
+
+
+      drawLine(graphDrawContext, new Point(x0, y), new Point(widgetWidth, y), 2, Color.white());
+      const bundesLandRect = new Rect(x1, y + 3, vertLineWeight, 23);
       drawTextR(graphDrawContext, bundesLand, bundesLandRect, dayColor, Font.mediumSystemFont(21));
-      const bundesLandIncidenceRect = new Rect(spaceBetweenDays * (i + 1) + spaceBetweenDays / 3, y - 28, vertLineWeight, 23);
+      const bundesLandIncidenceRect = new Rect(x1, y - 28, vertLineWeight, 23);
       drawTextR(graphDrawContext, incidenceBl, bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(21));
     }
   }
