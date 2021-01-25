@@ -85,6 +85,7 @@ async function createWidget(items) {
       console.log('get current lat/lon');
     } catch (e) {
       errorText = list.addText('Keine Ortsdaten gefunden');
+      console.log(e);
       errorText.setTextColor = Color.white();
       return list;
     }
@@ -122,8 +123,6 @@ async function createWidget(items) {
   const beds = diviAttr.betten_gesamt;
   const usedBeds = diviAttr.betten_belegt;
   const cases = diviAttr.faelle_covid_aktuell;
-
-  console.log(incidenceBl);
 
   // get data for the last 21 days
   const date = new Date();
