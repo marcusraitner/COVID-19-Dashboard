@@ -2,7 +2,8 @@
 // These must be at the very top of the file. Do not edit.
 // icon-color: deep-gray; icon-glyph: magic;
 // Licence: Robert Koch-Institut (RKI), dl-de/by-2-0
-//
+// Author: Marcus Raitner (https://fuehrung-erfahren.de)
+// Source: https://gist.github.com/marcusraitner/a1b633625d1016498eaaab712461dfc4
 
 const DAY_IN_MICROSECONDS = 86400000;
 
@@ -136,7 +137,7 @@ async function createWidget(items) {
     return list;
   }
 
-  let incidenceText = list.addText ('🦠 7-Tage-Inzidenz'.toUpperCase() + ' ' + county);
+  let incidenceText = list.addText('🦠 7-Tage-Inzidenz'.toUpperCase() + ' ' + county);
   incidenceText.font = Font.semiboldRoundedSystemFont(11);
   incidenceText.textColor = Color.white();
   list.addSpacer();
@@ -172,7 +173,7 @@ async function createWidget(items) {
   diff = max - min;
 
   let graphDrawContext = new DrawContext();
-  graphDrawContext.size = new Size (widgetWidth, graphHeight);
+  graphDrawContext.size = new Size(widgetWidth, graphHeight);
   graphDrawContext.opaque = false;
   graphDrawContext.setFont(Font.mediumSystemFont(22));
   graphDrawContext.setTextAlignedCenter();
@@ -227,7 +228,7 @@ async function createWidget(items) {
 
       let x0;
 
-      if (y >= casesRect.origin.y -5 && y <= casesRect.origin.y + casesRect.height + 5) {
+      if (y >= casesRect.origin.y - 5 && y <= casesRect.origin.y + casesRect.height + 5) {
         x0 = spaceBetweenDays * i + vertLineWeight;
       } else {
         x0 = spaceBetweenDays * i
@@ -250,8 +251,6 @@ async function createWidget(items) {
       graphDrawContext.setLineWidth(4);
       graphDrawContext.setStrokeColor(drawColor);
       graphDrawContext.strokePath();
-
-
 
       drawLine(graphDrawContext, new Point(x0, y), new Point(widgetWidth, y), 2, Color.white());
       const bundesLandRect = new Rect(x1, y + 3, vertLineWeight, 23);
