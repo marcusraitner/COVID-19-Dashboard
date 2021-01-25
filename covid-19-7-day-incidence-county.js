@@ -85,7 +85,7 @@ async function createWidget(items) {
       console.log('get current lat/lon');
     } catch (e) {
       errorText = list.addText('Keine Ortsdaten gefunden');
-      errorText.setTextColor = new Color.white();
+      errorText.setTextColor = Color.white();
       return list;
     }
   }
@@ -95,7 +95,7 @@ async function createWidget(items) {
 
   if (!locationData || !locationData.features || !locationData.features.length) {
     errorText = list.addText('Keine Ergebnisse für den aktuellen Ort gefunden.');
-    errorText.setTextColor = new Color.white();
+    errorText.setTextColor = Color.white();
     return list;
   }
 
@@ -106,7 +106,7 @@ async function createWidget(items) {
 
   if (!diviLocationData || !diviLocationData.features || !diviLocationData.features.length) {
     errorText = list.addText('Keine DIVI-Ergebnisse für den aktuellen Ort gefunden.');
-    errorText.setTextColor = new Color.white();
+    errorText.setTextColor = Color.white();
     return list;
   }
 
