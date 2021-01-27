@@ -64,8 +64,8 @@ async function createWidget(items) {
   let gradient = new LinearGradient();
   gradient.locations = [0, 1];
   gradient.colors = [
-    new Color("141414"),
-    new Color("13233F")
+    new Color("#141E30"),
+    new Color("#28416F")
   ];
 
   // list.backgroundColor = new Color('#191a1d', 1);
@@ -87,7 +87,6 @@ async function createWidget(items) {
       console.log('get current lat/lon');
     } catch (e) {
       errorText = list.addText('Keine Ortsdaten gefunden');
-      console.log(e);
       errorText.textColor = Color.white();
       return list;
     }
@@ -125,6 +124,7 @@ async function createWidget(items) {
   const beds = diviAttr.betten_gesamt;
   const usedBeds = diviAttr.betten_belegt;
   const cases = diviAttr.faelle_covid_aktuell;
+  const casesventilation = diviAttr.faelle_covid_aktuell_beatmet;
 
   // get data for the last 21 days
   const date = new Date();
@@ -273,10 +273,11 @@ async function createWidget(items) {
 
   let freeBedsWidth = freeBeds / beds * bedsWidth;
   let covidBedsWidth = cases / beds * bedsWidth;
+  let beatmetBedsWidth = casesBeatmet / beds * bedsWidth;
 
   freeBedsWidth = (freeBedsWidth == 0 ? tickWidth /2 : freeBedsWidth);
-
   covidBedsWidth = (covidBedsWidth == 0 ? tickWidth / 2 : covidBedsWidth);
+  beatmetBedsWidth = (beatmetBedsWidth == 0 ? tickWidth / 2 : beatmetBedsWidth);
 
 
   // Line representing all beds
@@ -290,7 +291,7 @@ async function createWidget(items) {
   let bedsRect = new Rect(0, bedsHeight / 2 - 40, bedsWidth - freeBedsWidth - 10, 26);
   drawContext.setFont(Font.mediumSystemFont(22));
   drawContext.setTextColor(Color.white());
-  drawContext.drawTextInRect('🛏 ' + beds + ' Intensivbetten'.toUpperCase(), bedsRect)
+  drawContext.drawTextInRect('🛏' + 'Intensivbetten'.toUpperCase() + ': ' + beds, bedsRect)
 
   // Portion representing free beds
   path = new Path();
@@ -304,7 +305,7 @@ async function createWidget(items) {
   drawContext.setFont(Font.mediumSystemFont(22));
   let freeRect = new Rect(0, bedsHeight / 2 - 35, bedsWidth - freeBedsWidth - 10, 22);
   drawContext.setTextAlignedRight();
-  drawContext.drawTextInRect(freeBeds + ' frei', freeRect)
+  drawContext.drawTextInRect('frei'.toUpperCase() + ': ' + freeBeds, freeRect)
 
   // Portion representing covid patients
   path = new Path();
@@ -313,11 +314,20 @@ async function createWidget(items) {
   drawContext.addPath(path);
   drawContext.setFillColor(colorHigh);
   drawContext.fillPath();
-
   drawLine(drawContext, new Point(covidBedsWidth, bedsHeight / 2 - bedsLineWidth / 2 - 5), new Point(covidBedsWidth, bedsHeight / 2 + 38), tickWidth, colorHigh);
+
+  // Portion representing cases beatmet
+  path = new Path();
+  bedsLineRect = new Rect(0, bedsHeight / 2 - bedsLineWidth / 2, beatmetBedsWidth, bedsLineWidth);
+  path.addRoundedRect(bedsLineRect, 2, 2);
+  drawContext.addPath(path);
+  drawContext.setFillColor(colorUltra);
+  drawContext.fillPath();
+  drawLine(drawContext, new Point(beatmetBedsWidth, bedsHeight / 2 - bedsLineWidth / 2 - 5), new Point(beatmetBedsWidth, bedsHeight / 2 + 20), tickWidth, colorUltra);
+
   let covidRect = new Rect(covidBedsWidth + 10, bedsHeight / 2 + 10, bedsWidth - covidBedsWidth, 22);
   drawContext.setTextAlignedLeft();
-  drawContext.drawTextInRect(cases + ' COVID-19', covidRect);
+  drawContext.drawTextInRect('🦠COVID-19: ' + cases + '(' + casesBeatmet + ' beatmet)', covidRect);
 
   list.addImage(drawContext.getImage());
 
