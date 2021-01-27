@@ -327,7 +327,7 @@ async function createWidget(items) {
 
   let covidRect = new Rect(covidBedsWidth + 10, bedsHeight / 2 + 10, bedsWidth - covidBedsWidth, 22);
   drawContext.setTextAlignedLeft();
-  drawContext.drawTextInRect('🦠COVID-19: ' + cases + '(' + casesBeatmet + ' beatmet)', covidRect);
+  drawContext.drawTextInRect('🦠COVID-19: ' + cases + ' (davon ' + casesBeatmet + ' beatmet)', covidRect);
 
   list.addImage(drawContext.getImage());
 
