@@ -124,7 +124,7 @@ async function createWidget(items) {
   const beds = diviAttr.betten_gesamt;
   const usedBeds = diviAttr.betten_belegt;
   const cases = diviAttr.faelle_covid_aktuell;
-  const casesventilation = diviAttr.faelle_covid_aktuell_beatmet;
+  const casesBeatmet = diviAttr.faelle_covid_aktuell_beatmet;
 
   // get data for the last 21 days
   const date = new Date();
