@@ -17,10 +17,11 @@ const vertLineWeight = 42;
 const tickWidth = 4;
 
 // colors for incidence highlighting
-const colorLow = new Color('#FAD643', 1); // < 50
-const colorMed = new Color('#E8B365', 1); // < 100
-const colorHigh = new Color('#DD5045', 1); // < 200
-const colorUltra = new Color('#8E0000', 1); // >= 200
+const colorNorm = new Color('#cccccf', 1) // < 35
+const colorLow = new Color('#dea657', 1); // < 50
+const colorMed = new Color('#c9533c', 1); // < 100
+const colorHigh = new Color('#b02c30', 1); // < 200
+const colorUltra = new Color('#6d1d21', 1); // >= 200
 
 // other colors
 const accentColor2 = Color.lightGray(); // used for weekends
@@ -191,7 +192,9 @@ async function createWidget(items) {
 
     let drawColor;
 
-    if (cases < 50) {
+    if (cases < 35) {
+      drawColor = colorNorm;
+    } else if (cases < 50) {
       drawColor = colorLow;
     } else if (cases < 100) {
       drawColor = colorMed;
@@ -275,7 +278,7 @@ async function createWidget(items) {
   let covidBedsWidth = cases / beds * bedsWidth;
   let beatmetBedsWidth = casesBeatmet / beds * bedsWidth;
 
-  freeBedsWidth = (freeBedsWidth == 0 ? tickWidth /2 : freeBedsWidth);
+  freeBedsWidth = (freeBedsWidth == 0 ? tickWidth / 2 : freeBedsWidth);
   covidBedsWidth = (covidBedsWidth == 0 ? tickWidth / 2 : covidBedsWidth);
   beatmetBedsWidth = (beatmetBedsWidth == 0 ? tickWidth / 2 : beatmetBedsWidth);
 
