@@ -25,6 +25,8 @@ const colorUltra = new Color('#6d1d21', 1); // >= 200
 
 // other colors
 const accentColor2 = Color.lightGray(); // used for weekends
+const bedsLineColor = new Color('#939598', 1);
+const bedsLineFreeColor = new Color('#4D8802', 1);
 
 // APIs
 const apiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_Landkreisdaten/FeatureServer/0/query?where=1%3D1&outFields=GEN,EWZ,cases,death_rate,deaths,cases7_per_100k,cases7_bl_per_100k,BL,county&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
@@ -131,7 +133,7 @@ async function createWidget(items) {
 
   // get data for the last 21 days
   const date = new Date();
-  date.setTime(date.getTime() - 21 * DAY_IN_MICROSECONDS);
+  date.setTime(date.getTime() - 20 * DAY_IN_MICROSECONDS);
   const minDate = ('0' + (date.getMonth() + 1)).slice(-2) + '-' + ('0' + date.getDate()).slice(-2) + '-' + date.getFullYear();
 
   const countyData = await new Request(apiUrlData(county, minDate)).loadJSON();
@@ -162,50 +164,59 @@ async function createWidget(items) {
   stack.addSpacer(10);
 
   let rightStack = stack.addStack();
-  rightStack.setPadding(0, 0, 0, 0);
+  rightStack.setPadding(10, 0, 10, 10);
 
   let incidenceText = leftStack.addText('🦠 7-Tage-Inzidenz'.toUpperCase() + ' – ' + county);
   incidenceText.font = Font.semiboldRoundedSystemFont(11);
   incidenceText.textColor = Color.white();
   leftStack.addSpacer();
 
-  // Finally add vaccination status
-  const vaccinationHeight = widgetHeight;
-  const vaccinationWidth = 55;
+  // Add vaccination status
+  const vaccinationHeight = widgetHeight - 20;
+  const vaccinationWidth = 75;
+  const vaccinationBarWidth = 20;
 
   let drawContext = new DrawContext();
   drawContext.size = new Size(vaccinationWidth, vaccinationHeight);
   drawContext.opaque = false;
 
-  let vaccinationTotalRect = new Rect(0, 0, vaccinationWidth, vaccinationHeight);
+  let vaccinationTotalRect = new Rect(0, 0, vaccinationBarWidth, vaccinationHeight);
   let path = new Path();
-  path.addRoundedRect(vaccinationTotalRect, 6, 6);
+  path.addRoundedRect(vaccinationTotalRect, 4, 4);
   drawContext.addPath(path);
-  drawContext.setFillColor(new Color('#D7E1E9', 1));
+  drawContext.setFillColor(bedsLineColor);
   drawContext.fillPath();
 
-  let vaccinationRect = new Rect(0, (1 - quoteInitial / 100) * vaccinationHeight, vaccinationWidth, vaccinationHeight * quoteInitial / 100);
+  let vaccinationRect = new Rect(0, (1 - quoteInitial / 100) * vaccinationHeight, vaccinationBarWidth, vaccinationHeight * quoteInitial / 100);
   path = new Path();
-  path.addRoundedRect(vaccinationRect, 6, 6);
+  path.addRoundedRect(vaccinationRect, 4, 4);
   drawContext.addPath(path);
-  drawContext.setFillColor(new Color('#4D8802', 1));
+  drawContext.setFillColor(bedsLineFreeColor);
   drawContext.fillPath();
 
-  let vaccinationTextRect = new Rect(6, 10, vaccinationWidth - 10, 34);
+  let vaccinationTextRect = new Rect(vaccinationBarWidth + 6, 10, vaccinationWidth - 10, 34);
   drawTextR(drawContext, '💉', vaccinationTextRect, Color.white(), Font.mediumSystemFont(30));
 
-  vaccinationTextRect = new Rect(6, 44, vaccinationWidth - 10, 25);
-  drawTextR(drawContext, bundesLand, vaccinationTextRect, Color.black(), Font.mediumSystemFont(22));
+  vaccinationTextRect = new Rect(vaccinationBarWidth + 6, 44, vaccinationWidth - 10, 25);
+  drawTextR(drawContext, bundesLand, vaccinationTextRect, Color.white(), Font.mediumSystemFont(22));
 
-  vaccinationTextRect = new Rect(4, (1 - quoteInitial / 100) * vaccinationHeight - 20, vaccinationWidth, 20);
-  drawTextR(drawContext, quoteInitial + '%', vaccinationTextRect, Color.black(), Font.regularSystemFont(16));
+  path = new Path();
+  path.move(new Point(0, (1 - quoteInitial / 100) * vaccinationHeight));
+  path.addLine(new Point(vaccinationWidth, (1 - quoteInitial / 100) * vaccinationHeight));
+  drawContext.addPath(path);
+  drawContext.setLineWidth(2);
+  drawContext.setStrokeColor(bedsLineFreeColor);
+  drawContext.strokePath();
+
+  vaccinationTextRect = new Rect(vaccinationBarWidth + 6, (1 - quoteInitial / 100) * vaccinationHeight - 26, vaccinationWidth, 22);
+  drawTextR(drawContext, quoteInitial + '%', vaccinationTextRect, Color.white(), Font.regularSystemFont(22));
 
   path = new Path();
   path.move(new Point(0, 0.3 * vaccinationHeight));
-  path.addLine(new Point(vaccinationWidth, 0.3 * vaccinationHeight));
+  path.addLine(new Point(vaccinationBarWidth, 0.3 * vaccinationHeight));
   drawContext.addPath(path);
   drawContext.setLineWidth(2);
-  drawContext.setStrokeColor(new Color('#939598'));
+  drawContext.setStrokeColor(Color.white());
   drawContext.strokePath();
 
   rightStack.addImage(drawContext.getImage());
@@ -245,7 +256,7 @@ async function createWidget(items) {
   diff = max - min;
 
   let graphDrawContext = new DrawContext();
-  graphDrawContext.size = new Size(widgetWidth, graphHeight);
+  graphDrawContext.size = new Size(widgetWidth - spaceBetweenDays, graphHeight);
   graphDrawContext.opaque = false;
   graphDrawContext.setFont(Font.mediumSystemFont(22));
   graphDrawContext.setTextAlignedCenter();
@@ -358,7 +369,7 @@ async function createWidget(items) {
   let bedsLineRect = new Rect(0, bedsHeight / 2 - bedsLineWidth / 2, bedsWidth, bedsLineWidth);
   path.addRoundedRect(bedsLineRect, 2, 2);
   drawContext.addPath(path);
-  drawContext.setFillColor(new Color('#939598', 1));
+  drawContext.setFillColor(bedsLineColor);
   drawContext.fillPath();
 
   let bedsRect = new Rect(0, bedsHeight / 2 - 40, bedsWidth - freeBedsWidth - 10, 26);
@@ -371,7 +382,7 @@ async function createWidget(items) {
   bedsLineRect = new Rect(bedsWidth - freeBedsWidth, bedsHeight / 2 - bedsLineWidth / 2, freeBedsWidth, bedsLineWidth);
   path.addRoundedRect(bedsLineRect, 2, 2);
   drawContext.addPath(path);
-  drawContext.setFillColor(new Color('#4D8802', 1));
+  drawContext.setFillColor(bedsLineFreeColor);
   drawContext.fillPath();
 
   drawLine(drawContext, new Point(bedsWidth - freeBedsWidth, bedsHeight / 2 + bedsLineWidth / 2 + 5), new Point(bedsWidth - freeBedsWidth, bedsHeight / 2 - 40), tickWidth, new Color('#4D8802', 1));
