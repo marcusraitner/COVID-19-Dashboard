@@ -33,6 +33,8 @@ const apiUrlData = (county, minDate) => `https://services7.arcgis.com/mOBPykOjAy
 
 const diviApiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/DIVI_Intensivregister_Landkreise/FeatureServer/0/query?where=1%3D1&outFields=*&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
 
+const vaccinationUrl = (county) => `https://api.vaccination-tracker.app/v1/de-vaccinations-current?key=quote_initial&geo=${ encodeURIComponent( county ) }`;
+
 const stateToAbbr = {
   'Baden-Württemberg': 'BW',
   'Bayern': 'BY',
@@ -71,7 +73,7 @@ async function createWidget(items) {
 
   // list.backgroundColor = new Color('#191a1d', 1);
   list.backgroundGradient = gradient;
-  list.setPadding(10, 10, 10, 10);
+  list.setPadding(0, 0, 0, 0);
 
   // get current location or use given args
   if (args.widgetParameter) {
@@ -139,10 +141,78 @@ async function createWidget(items) {
     return list;
   }
 
-  let incidenceText = list.addText('🦠 7-Tage-Inzidenz'.toUpperCase() + ' – ' + county);
+  // get vaccination status
+  const vaccinationData = await new Request(vaccinationUrl(attr.BL)).loadJSON();
+
+  if (!vaccinationData || !vaccinationData.data || !vaccinationData.data.length) {
+    list.addText('Kein Impfstatus gefunden.');
+    return list;
+  }
+
+  const quoteInitial = Math.round(vaccinationData.data[0].value * 10) / 10;
+
+  let stack = list.addStack();
+  stack.layoutHorizontally();
+  stack.setPadding(0, 0, 0, 0);
+
+  let leftStack = stack.addStack();
+  leftStack.layoutVertically();
+  leftStack.setPadding(10, 10, 10, 0);
+
+  stack.addSpacer(10);
+
+  let rightStack = stack.addStack();
+  rightStack.setPadding(0, 0, 0, 0);
+
+  let incidenceText = leftStack.addText('🦠 7-Tage-Inzidenz'.toUpperCase() + ' – ' + county);
   incidenceText.font = Font.semiboldRoundedSystemFont(11);
   incidenceText.textColor = Color.white();
-  list.addSpacer();
+  leftStack.addSpacer();
+
+  // Finally add vaccination status
+  const vaccinationHeight = widgetHeight;
+  const vaccinationWidth = 55;
+
+  let drawContext = new DrawContext();
+  drawContext.size = new Size(vaccinationWidth, vaccinationHeight);
+  drawContext.opaque = false;
+
+  let vaccinationTotalRect = new Rect(0, 0, vaccinationWidth, vaccinationHeight);
+  let path = new Path();
+  path.addRoundedRect(vaccinationTotalRect, 6, 6);
+  drawContext.addPath(path);
+  drawContext.setFillColor(new Color('#D7E1E9', 1));
+  drawContext.fillPath();
+
+  let vaccinationRect = new Rect(0, (1 - quoteInitial / 100) * vaccinationHeight, vaccinationWidth, vaccinationHeight * quoteInitial / 100);
+  path = new Path();
+  path.addRoundedRect(vaccinationRect, 6, 6);
+  drawContext.addPath(path);
+  drawContext.setFillColor(new Color('#4D8802', 1));
+  drawContext.fillPath();
+
+  let vaccinationTextRect = new Rect(6, 10, vaccinationWidth - 10, 34);
+  drawTextR(drawContext, '💉', vaccinationTextRect, Color.white(), Font.mediumSystemFont(30));
+
+  vaccinationTextRect = new Rect(6, 44, vaccinationWidth - 10, 25);
+  drawTextR(drawContext, bundesLand, vaccinationTextRect, Color.black(), Font.mediumSystemFont(22));
+
+  vaccinationTextRect = new Rect(4, (1 - quoteInitial / 100) * vaccinationHeight - 20, vaccinationWidth, 20);
+  drawTextR(drawContext, quoteInitial + '%', vaccinationTextRect, Color.black(), Font.regularSystemFont(16));
+
+  path = new Path();
+  path.move(new Point(0, 0.3 * vaccinationHeight));
+  path.addLine(new Point(vaccinationWidth, 0.3 * vaccinationHeight));
+  drawContext.addPath(path);
+  drawContext.setLineWidth(2);
+  drawContext.setStrokeColor(new Color('#939598'));
+  drawContext.strokePath();
+
+  rightStack.addImage(drawContext.getImage());
+  /*
+    let bundeslandText = rightStack.addText(bundesLand);
+    bundeslandText.centerAlignText();
+    bundeslandText.font = Font.boldRoundedSystemFont(15);*/
 
   let min, max, diff;
 
@@ -204,7 +274,7 @@ async function createWidget(items) {
       drawColor = colorUltra;
     }
 
-    let path = new Path();
+    path = new Path();
     let rect = new Rect(spaceBetweenDays * i, graphBottom - (barHeight * delta), vertLineWeight, barHeight * delta);
     path.addRoundedRect(rect, 4, 4);
     graphDrawContext.addPath(path);
@@ -248,7 +318,7 @@ async function createWidget(items) {
         drawColor = colorUltra;
       }
 
-      let path = new Path();
+      path = new Path();
       let rect = new Rect(spaceBetweenDays * (i + 1) + spaceBetweenDays / 3 + 2, graphBottom - (barHeight * delta), vertLineWeight - 2, barHeight * delta - 2);
       path.addRoundedRect(rect, 4, 4);
       graphDrawContext.addPath(path);
@@ -265,10 +335,10 @@ async function createWidget(items) {
   }
 
   let graphImage = graphDrawContext.getImage();
-  list.addImage(graphImage);
-  list.addSpacer();
+  leftStack.addImage(graphImage);
+  leftStack.addSpacer();
 
-  let drawContext = new DrawContext();
+  drawContext = new DrawContext();
   const bedsHeight = 80;
   const bedsWidth = graphImage.size.width;
   drawContext.size = new Size(bedsWidth, bedsHeight);
@@ -284,7 +354,7 @@ async function createWidget(items) {
 
 
   // Line representing all beds
-  let path = new Path();
+  path = new Path();
   let bedsLineRect = new Rect(0, bedsHeight / 2 - bedsLineWidth / 2, bedsWidth, bedsLineWidth);
   path.addRoundedRect(bedsLineRect, 2, 2);
   drawContext.addPath(path);
@@ -332,8 +402,7 @@ async function createWidget(items) {
   drawContext.setTextAlignedLeft();
   drawContext.drawTextInRect('🦠COVID-19: ' + cases + ' (davon ' + casesBeatmet + ' beatmet)', covidRect);
 
-  list.addImage(drawContext.getImage());
-
+  leftStack.addImage(drawContext.getImage());
   return list;
 }
 
