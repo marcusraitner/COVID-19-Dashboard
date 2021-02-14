@@ -36,6 +36,8 @@ const apiUrlData = (county, minDate) => `https://services7.arcgis.com/mOBPykOjAy
 const diviApiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/DIVI_Intensivregister_Landkreise/FeatureServer/0/query?where=1%3D1&outFields=*&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
 
 const vaccinationUrl = (county) => `https://api.vaccination-tracker.app/v1/de-vaccinations-current?key=quote_initial&geo=${ encodeURIComponent( county ) }`;
+const vaccinationBoosterUrl = (county) => `https://api.vaccination-tracker.app/v1/de-vaccinations-current?key=quote_booster&geo=${ encodeURIComponent( county ) }`;
+
 
 const stateToAbbr = {
   'Baden-Württemberg': 'BW',
@@ -153,6 +155,15 @@ async function createWidget(items) {
 
   const quoteInitial = Math.round(vaccinationData.data[0].value * 10) / 10;
 
+  const vaccinationBoosterData = await new Request(vaccinationBoosterUrl(attr.BL)).loadJSON();
+
+  if (!vaccinationBoosterData || !vaccinationBoosterData.data || !vaccinationBoosterData.data.length) {
+    list.addText('Kein Impfstatus gefunden.');
+    return list;
+  }
+
+  const quoteBooster = Math.round(vaccinationBoosterData.data[0].value * 10) / 10;
+
   let stack = list.addStack();
   stack.layoutHorizontally();
   stack.setPadding(0, 0, 0, 0);
@@ -173,6 +184,7 @@ async function createWidget(items) {
 
   // Add vaccination status
   const vaccinationHeight = widgetHeight - 20;
+  const vaccinationBottom = vaccinationHeight - 25;
   const vaccinationWidth = 75;
   const vaccinationBarWidth = 20;
 
@@ -180,18 +192,11 @@ async function createWidget(items) {
   drawContext.size = new Size(vaccinationWidth, vaccinationHeight);
   drawContext.opaque = false;
 
-  let vaccinationTotalRect = new Rect(0, 0, vaccinationBarWidth, vaccinationHeight);
+  let vaccinationTotalRect = new Rect(0, 0, vaccinationBarWidth, vaccinationBottom);
   let path = new Path();
   path.addRoundedRect(vaccinationTotalRect, 4, 4);
   drawContext.addPath(path);
   drawContext.setFillColor(bedsLineColor);
-  drawContext.fillPath();
-
-  let vaccinationRect = new Rect(0, (1 - quoteInitial / 100) * vaccinationHeight, vaccinationBarWidth, vaccinationHeight * quoteInitial / 100);
-  path = new Path();
-  path.addRoundedRect(vaccinationRect, 4, 4);
-  drawContext.addPath(path);
-  drawContext.setFillColor(bedsLineFreeColor);
   drawContext.fillPath();
 
   let vaccinationTextRect = new Rect(vaccinationBarWidth + 6, 10, vaccinationWidth - 10, 34);
@@ -200,20 +205,47 @@ async function createWidget(items) {
   vaccinationTextRect = new Rect(vaccinationBarWidth + 6, 44, vaccinationWidth - 10, 25);
   drawTextR(drawContext, bundesLand, vaccinationTextRect, Color.white(), Font.mediumSystemFont(22));
 
+  let vaccinationRect = new Rect(0, (1 - quoteInitial / 100) * vaccinationBottom, vaccinationBarWidth, vaccinationBottom * quoteInitial / 100);
   path = new Path();
-  path.move(new Point(0, (1 - quoteInitial / 100) * vaccinationHeight));
-  path.addLine(new Point(vaccinationWidth, (1 - quoteInitial / 100) * vaccinationHeight));
+  path.addRoundedRect(vaccinationRect, 4, 4);
+  drawContext.addPath(path);
+  drawContext.setFillColor(colorLow);
+  drawContext.fillPath();
+
+
+  path = new Path();
+  path.move(new Point(0, (1 - quoteInitial / 100) * vaccinationBottom));
+  path.addLine(new Point(vaccinationWidth, (1 - quoteInitial / 100) * vaccinationBottom));
+  drawContext.addPath(path);
+  drawContext.setLineWidth(2);
+  drawContext.setStrokeColor(colorLow);
+  drawContext.strokePath();
+
+  vaccinationTextRect = new Rect(vaccinationBarWidth + 6, (1 - quoteInitial / 100) * vaccinationBottom - 26, vaccinationWidth, 22);
+  drawTextR(drawContext, quoteInitial + '%', vaccinationTextRect, Color.white(), Font.regularSystemFont(22));
+
+  let vaccinationBoosterRect = new Rect(0, (1 - quoteBooster / 100) * vaccinationBottom, vaccinationBarWidth, vaccinationBottom * quoteBooster / 100);
+  path = new Path();
+  path.addRoundedRect(vaccinationBoosterRect, 4, 4);
+  drawContext.addPath(path);
+  drawContext.setFillColor(bedsLineFreeColor);
+  drawContext.fillPath();
+
+
+  path = new Path();
+  path.move(new Point(0, (1 - quoteBooster / 100) * vaccinationBottom));
+  path.addLine(new Point(vaccinationWidth, (1 - quoteBooster / 100) * vaccinationBottom));
   drawContext.addPath(path);
   drawContext.setLineWidth(2);
   drawContext.setStrokeColor(bedsLineFreeColor);
   drawContext.strokePath();
 
-  vaccinationTextRect = new Rect(vaccinationBarWidth + 6, (1 - quoteInitial / 100) * vaccinationHeight - 26, vaccinationWidth, 22);
-  drawTextR(drawContext, quoteInitial + '%', vaccinationTextRect, Color.white(), Font.regularSystemFont(22));
+  vaccinationTextRect = new Rect(vaccinationBarWidth + 6, (1 - quoteBooster / 100) * vaccinationBottom - 2, vaccinationWidth, 22);
+  drawTextR(drawContext, quoteBooster + '%', vaccinationTextRect, Color.white(), Font.regularSystemFont(22));
 
   path = new Path();
-  path.move(new Point(0, 0.3 * vaccinationHeight));
-  path.addLine(new Point(vaccinationBarWidth, 0.3 * vaccinationHeight));
+  path.move(new Point(0, 0.3 * vaccinationBottom));
+  path.addLine(new Point(vaccinationBarWidth, 0.3 * vaccinationBottom));
   drawContext.addPath(path);
   drawContext.setLineWidth(2);
   drawContext.setStrokeColor(Color.white());
