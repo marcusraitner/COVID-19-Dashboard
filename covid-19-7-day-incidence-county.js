@@ -28,7 +28,7 @@ const accentColor2 = Color.lightGray(); // used for weekends
 const bedsLineColor = new Color('#939598', 1);
 const bedsLineFreeColor = new Color('#4D8802', 1);
 const vaccinationColor = new Color('#00848C', 1);
-const vaccinationBoosterColor = new Color('#116315', 1);
+const vaccinationBoosterColor = new Color('#004156', 1);
 
 // Gradients
 
@@ -248,6 +248,14 @@ async function createWidget(items) {
 
   vaccinationTextRect = new Rect(6, 0.3 * vaccinationBottom - 28, vaccinationWidth, 22);
   drawTextR(drawContext, '70 %', vaccinationTextRect, Color.white(), Font.regularSystemFont(22));
+
+path = new Path();
+path.move(new Point(1,0));
+path.addLine(new Point(1,vaccinationHeight));
+drawContext.addPath(path);
+  drawContext.setLineWidth(1);
+  drawContext.setStrokeColor(Color.white());
+  drawContext.strokePath();
 
   rightStack.addImage(drawContext.getImage());
 
