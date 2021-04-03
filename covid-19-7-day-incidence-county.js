@@ -5,6 +5,18 @@
 // Author: Marcus Raitner (https://fuehrung-erfahren.de)
 // Source: https://gist.github.com/marcusraitner/a1b633625d1016498eaaab712461dfc4
 
+//------------------------------------------------------------------------------
+// General Options Section
+//------------------------------------------------------------------------------
+
+// Set to true for an image background, false for no image.
+const imageBackground = false;
+
+// Set to true to reset the widget's background image.
+const forceImageUpdate = false;
+
+//------------------------------------------------------------------------------
+
 const DAY_IN_MICROSECONDS = 86400000;
 
 const widgetHeight = 338;
@@ -92,7 +104,34 @@ async function createWidget(items) {
   let location;
   const list = new ListWidget();
 
-  list.backgroundGradient = backgroundGradient;
+  // If it's an image background, display it.
+  if (imageBackground) {
+
+    // Determine if our image exists and when it was saved.
+    const files = FileManager.local()
+    const path = files.joinPath(files.documentsDirectory(), "weather-cal-image-eric")
+    const exists = files.fileExists(path)
+
+    // If it exists and an update isn't forced, use the cache.
+    if (exists && (config.runsInWidget || !forceImageUpdate)) {
+      list.backgroundImage = files.readImage(path)
+
+    // If it's missing when running in the widget, use a gray background.
+    } else if (!exists && config.runsInWidget) {
+      list.backgroundGradient = backgroundGradient;
+
+    // But if we're running in app, prompt the user for the image.
+    } else {
+        const img = await Photos.fromLibrary()
+        list.backgroundImage = img
+        files.writeImage(path, img)
+    }
+
+  // If it's not an image background, show the gradient.
+  } else {
+    list.backgroundGradient = backgroundGradient;
+  }
+
   list.setPadding(0, 0, 0, 0);
 
   // get current location or use given args
