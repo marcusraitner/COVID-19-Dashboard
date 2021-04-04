@@ -15,19 +15,6 @@ const imageBackground = false;
 // Set to true to reset the widget's background image.
 const forceImageUpdate = false;
 
-//------------------------------------------------------------------------------
-
-const DAY_IN_MICROSECONDS = 86400000;
-
-const widgetHeight = 338;
-const widgetWidth = 720;
-const graphLow = 0;
-const graphHeight = 170;
-const spaceBetweenDays = 47;
-const bedsLineWidth = 12;
-const vertLineWeight = 42;
-const tickWidth = 4;
-
 // colors for incidence highlighting
 const colorNorm = new Color('#cccccf', 1) // < 35
 const colorLow = new Color('#dea657', 1); // < 50//
@@ -43,7 +30,6 @@ const vaccinationColor = new Color('#00848C', 1);
 const vaccinationBoosterColor = new Color('#004156', 1);
 
 // Gradients
-
 let vaccinationGradient = new LinearGradient();
 vaccinationGradient.locations = [0, 0.2, 0.8, 1];
 vaccinationGradient.colors = [
@@ -62,7 +48,18 @@ backgroundGradient.colors = [
   new Color("#141E30"),
   new Color("#28416F")
 ];
+//------------------------------------------------------------------------------
 
+const DAY_IN_MICROSECONDS = 86400000;
+
+const widgetHeight = 338;
+const widgetWidth = 720;
+const graphLow = 0;
+const graphHeight = 170;
+const spaceBetweenDays = 47;
+const bedsLineWidth = 12;
+const vertLineWeight = 42;
+const tickWidth = 4;
 
 // APIs
 const apiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_Landkreisdaten/FeatureServer/0/query?where=1%3D1&outFields=GEN,EWZ,cases,death_rate,deaths,cases7_per_100k,cases7_bl_per_100k,BL,county&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
@@ -109,25 +106,25 @@ async function createWidget(items) {
 
     // Determine if our image exists and when it was saved.
     const files = FileManager.local()
-    const path = files.joinPath(files.documentsDirectory(), "weather-cal-image-eric")
+    const path = files.joinPath(files.documentsDirectory(), "covid19-background-image")
     const exists = files.fileExists(path)
 
     // If it exists and an update isn't forced, use the cache.
     if (exists && (config.runsInWidget || !forceImageUpdate)) {
       list.backgroundImage = files.readImage(path)
 
-    // If it's missing when running in the widget, use a gray background.
+      // If it's missing when running in the widget, use a gray background.
     } else if (!exists && config.runsInWidget) {
       list.backgroundGradient = backgroundGradient;
 
-    // But if we're running in app, prompt the user for the image.
+      // But if we're running in app, prompt the user for the image.
     } else {
-        const img = await Photos.fromLibrary()
-        list.backgroundImage = img
-        files.writeImage(path, img)
+      const img = await Photos.fromLibrary()
+      list.backgroundImage = img
+      files.writeImage(path, img)
     }
 
-  // If it's not an image background, show the gradient.
+    // If it's not an image background, show the gradient.
   } else {
     list.backgroundGradient = backgroundGradient;
   }
@@ -258,50 +255,28 @@ async function createWidget(items) {
   drawTextR(drawContext, bundesLand, vaccinationTextRect, Color.white(), Font.mediumSystemFont(22));
 
   let vaccinationRect = new Rect(0, (1 - quoteInitial / 100) * vaccinationBottom, vaccinationWidth, vaccinationBottom * quoteInitial / 100);
-  path = new Path();
-  path.addRoundedRect(vaccinationRect, 4, 4);
-  drawContext.addPath(path);
-  drawContext.setFillColor(vaccinationColor);
-  drawContext.fillPath();
+  drawRoundedRect(drawContext, vaccinationRect, vaccinationColor, 4);
 
   vaccinationTextRect = new Rect(10, (1 - quoteInitial / 100) * vaccinationBottom - 26, vaccinationWidth, 22);
   drawTextR(drawContext, quoteInitial + ' %', vaccinationTextRect, Color.white(), Font.regularSystemFont(22));
 
   let vaccinationBoosterRect = new Rect(0, (1 - quoteBooster / 100) * vaccinationBottom, vaccinationWidth, vaccinationBottom * quoteBooster / 100);
-  path = new Path();
-  path.addRoundedRect(vaccinationBoosterRect, 4, 4);
-  drawContext.addPath(path);
-  drawContext.setFillColor(vaccinationBoosterColor);
-  drawContext.fillPath();
-
+  drawRoundedRect(drawContext, vaccinationBoosterRect, vaccinationBoosterColor, 4);
   vaccinationTextRect = new Rect(10, (1 - quoteBooster / 100) * vaccinationBottom - 21, vaccinationWidth, 22);
   drawTextR(drawContext, quoteBooster + ' %', vaccinationTextRect, Color.white(), Font.regularSystemFont(22));
 
-  path = new Path();
-  path.move(new Point(0, 0.3 * vaccinationBottom));
-  path.addLine(new Point(vaccinationWidth, 0.3 * vaccinationBottom));
-  drawContext.addPath(path);
-  drawContext.setLineWidth(2);
-  drawContext.setStrokeColor(Color.white());
-  drawContext.strokePath();
-
-  vaccinationTextRect = new Rect(6, 0.3 * vaccinationBottom - 28, vaccinationWidth, 22);
-  drawTextR(drawContext, '70 %', vaccinationTextRect, Color.white(), Font.regularSystemFont(22));
-
-path = new Path();
-path.move(new Point(1,0));
-path.addLine(new Point(1,vaccinationHeight));
-drawContext.addPath(path);
-  drawContext.setLineWidth(1);
-  drawContext.setStrokeColor(Color.white());
-  drawContext.strokePath();
+  drawLine(drawContext, new Point(1, 0), new Point(1, vaccinationHeight), 2, Color.lightGray());
 
   rightStack.addImage(drawContext.getImage());
 
   let min, max, diff;
 
+  let dailyValues = new Array();
+
   // calculate incidence in place.
   for (let i = countyData.features.length - 1; i >= 6; i--) {
+    dailyValues[i] = countyData.features[i].attributes.AnzahlFall / ewz;
+
     let sum = 0;
 
     for (let j = 0; j < 7; j++) {
@@ -313,11 +288,11 @@ drawContext.addPath(path);
   }
 
   countyData.features.splice(0, 6);
+  dailyValues.splice(0, 6);
 
   for (let i = 0; i < countyData.features.length; i++) {
     let aux = countyData.features[i].attributes.AnzahlFall;
 
-    // min = (aux < min || min == undefined ? aux : min);
     max = (aux > max || max == undefined ? aux : max);
   }
 
@@ -346,24 +321,8 @@ drawContext.addPath(path);
 
     let drawColor;
 
-    if (cases < 35) {
-      drawColor = colorNorm;
-    } else if (cases < 50) {
-      drawColor = colorLow;
-    } else if (cases < 100) {
-      drawColor = colorMed;
-    } else if (cases < 200) {
-      drawColor = colorHigh;
-    } else {
-      drawColor = colorUltra;
-    }
-
-    path = new Path();
-    let rect = new Rect(spaceBetweenDays * i, graphBottom - (barHeight * delta), vertLineWeight, barHeight * delta);
-    path.addRoundedRect(rect, 4, 4);
-    graphDrawContext.addPath(path);
-    graphDrawContext.setFillColor(drawColor);
-    graphDrawContext.fillPath();
+    const casesRect = new Rect(spaceBetweenDays * i, graphBottom - (barHeight * delta) - 28, vertLineWeight, 23);
+    const dayRect = new Rect(spaceBetweenDays * i, graphBottom + 3, vertLineWeight, 23);
 
     let dayColor;
 
@@ -373,13 +332,8 @@ drawContext.addPath(path);
       dayColor = Color.white();
     }
 
-    const casesRect = new Rect(spaceBetweenDays * i, graphBottom - (barHeight * delta) - 28, vertLineWeight, 23);
-    const dayRect = new Rect(spaceBetweenDays * i, graphBottom + 3, vertLineWeight, 23);
-
-    drawTextR(graphDrawContext, cases, casesRect, dayColor, Font.mediumSystemFont(21));
-    drawTextR(graphDrawContext, day, dayRect, dayColor, Font.mediumSystemFont(21));
-
     if (i == countyData.features.length - 1) {
+
       const delta = (incidenceBl - min) / diff;
       const y = graphBottom - (barHeight * delta);
       const x1 = spaceBetweenDays * (i + 1) + spaceBetweenDays / 3;
@@ -402,20 +356,47 @@ drawContext.addPath(path);
         drawColor = colorUltra;
       }
 
-      path = new Path();
-      let rect = new Rect(spaceBetweenDays * (i + 1) + spaceBetweenDays / 3 + 2, graphBottom - (barHeight * delta), vertLineWeight - 2, barHeight * delta - 2);
+      let rect = new Rect(spaceBetweenDays * i + 2, graphBottom - (barHeight * delta), widgetWidth - spaceBetweenDays * (i + 1) - 4, barHeight * delta - 2);
+
+      drawRoundedRect(graphDrawContext, rect, new Color("#000000", .4), 4);
+      let path = new Path();
+
       path.addRoundedRect(rect, 4, 4);
       graphDrawContext.addPath(path);
       graphDrawContext.setLineWidth(4);
       graphDrawContext.setStrokeColor(drawColor);
       graphDrawContext.strokePath();
 
-      drawLine(graphDrawContext, new Point(x0, y), new Point(widgetWidth, y), 2, Color.white());
       const bundesLandRect = new Rect(x1, y + 3, vertLineWeight, 23);
       drawTextR(graphDrawContext, bundesLand, bundesLandRect, dayColor, Font.mediumSystemFont(21));
       const bundesLandIncidenceRect = new Rect(x1, y - 28, vertLineWeight, 23);
       drawTextR(graphDrawContext, incidenceBl, bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(21));
     }
+
+    if (cases < 35) {
+      drawColor = colorNorm;
+    } else if (cases < 50) {
+      drawColor = colorLow;
+    } else if (cases < 100) {
+      drawColor = colorMed;
+    } else if (cases < 200) {
+      drawColor = colorHigh;
+    } else {
+      drawColor = colorUltra;
+    }
+
+
+    let rect = new Rect(spaceBetweenDays * i, graphBottom - (barHeight * delta), vertLineWeight, barHeight * delta);
+    drawRoundedRect(graphDrawContext, rect, drawColor, 4);
+
+    const dailyDelta = (dailyValues[i] - min) / diff;
+    rect = new Rect(spaceBetweenDays * i, graphBottom - (barHeight * dailyDelta), vertLineWeight, barHeight * dailyDelta);
+
+    drawRoundedRect(graphDrawContext, rect, new Color("#FFFFFF", .4), 4);
+
+    drawTextR(graphDrawContext, cases, casesRect, dayColor, Font.mediumSystemFont(21));
+    drawTextR(graphDrawContext, day, dayRect, dayColor, Font.mediumSystemFont(21));
+
   }
 
   let graphImage = graphDrawContext.getImage();
@@ -438,12 +419,8 @@ drawContext.addPath(path);
 
 
   // Line representing all beds
-  path = new Path();
   let bedsLineRect = new Rect(0, bedsHeight / 2 - bedsLineWidth / 2, bedsWidth, bedsLineWidth);
-  path.addRoundedRect(bedsLineRect, 2, 2);
-  drawContext.addPath(path);
-  drawContext.setFillColor(bedsLineColor);
-  drawContext.fillPath();
+  drawRoundedRect(drawContext, bedsLineRect, bedsLineColor, 2)
 
   let bedsRect = new Rect(0, bedsHeight / 2 - 40, bedsWidth - freeBedsWidth - 10, 26);
   drawContext.setFont(Font.mediumSystemFont(22));
@@ -451,12 +428,8 @@ drawContext.addPath(path);
   drawContext.drawTextInRect('🛏' + 'Intensivbetten'.toUpperCase() + ': ' + beds, bedsRect)
 
   // Portion representing free beds
-  path = new Path();
   bedsLineRect = new Rect(bedsWidth - freeBedsWidth, bedsHeight / 2 - bedsLineWidth / 2, freeBedsWidth, bedsLineWidth);
-  path.addRoundedRect(bedsLineRect, 2, 2);
-  drawContext.addPath(path);
-  drawContext.setFillColor(bedsLineFreeColor);
-  drawContext.fillPath();
+  drawRoundedRect(drawContext, bedsLineRect, bedsLineFreeColor, 2);
 
   drawLine(drawContext, new Point(bedsWidth - freeBedsWidth, bedsHeight / 2 + bedsLineWidth / 2 + 5), new Point(bedsWidth - freeBedsWidth, bedsHeight / 2 - 40), tickWidth, new Color('#4D8802', 1));
   drawContext.setFont(Font.mediumSystemFont(22));
@@ -465,21 +438,15 @@ drawContext.addPath(path);
   drawContext.drawTextInRect('frei'.toUpperCase() + ': ' + freeBeds, freeRect)
 
   // Portion representing covid patients
-  path = new Path();
   bedsLineRect = new Rect(0, bedsHeight / 2 - bedsLineWidth / 2, covidBedsWidth, bedsLineWidth);
-  path.addRoundedRect(bedsLineRect, 2, 2);
-  drawContext.addPath(path);
-  drawContext.setFillColor(colorHigh);
-  drawContext.fillPath();
+  drawRoundedRect(drawContext, bedsLineRect, colorHigh, 2);
+
   drawLine(drawContext, new Point(covidBedsWidth, bedsHeight / 2 - bedsLineWidth / 2 - 5), new Point(covidBedsWidth, bedsHeight / 2 + 38), tickWidth, colorHigh);
 
   // Portion representing cases beatmet
-  path = new Path();
   bedsLineRect = new Rect(0, bedsHeight / 2 - bedsLineWidth / 2, beatmetBedsWidth, bedsLineWidth);
-  path.addRoundedRect(bedsLineRect, 2, 2);
-  drawContext.addPath(path);
-  drawContext.setFillColor(colorUltra);
-  drawContext.fillPath();
+  drawRoundedRect(drawContext, bedsLineRect, colorUltra, 2);
+
   drawLine(drawContext, new Point(beatmetBedsWidth, bedsHeight / 2 - bedsLineWidth / 2 - 5), new Point(beatmetBedsWidth, bedsHeight / 2 + 20), tickWidth, colorUltra);
 
   let covidRect = new Rect(covidBedsWidth + 10, bedsHeight / 2 + 10, bedsWidth - covidBedsWidth, 22);
@@ -504,4 +471,12 @@ function drawLine(drawContext, point1, point2, width, color) {
   drawContext.setStrokeColor(color);
   drawContext.setLineWidth(width);
   drawContext.strokePath();
+}
+
+function drawRoundedRect(drawContext, rect, color, radius) {
+  const path = new Path();
+  path.addRoundedRect(rect, radius, radius);
+  drawContext.addPath(path);
+  drawContext.setFillColor(color);
+  drawContext.fillPath();
 }
