@@ -62,7 +62,9 @@ const vertLineWeight = 42;
 const tickWidth = 4;
 
 // APIs
-const apiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_Landkreisdaten/FeatureServer/0/query?where=1%3D1&outFields=GEN,EWZ,cases,death_rate,deaths,cases7_per_100k,cases7_bl_per_100k,BL,county&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
+const apiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_Landkreisdaten/FeatureServer/0/query?where=1%3D1&outFields=AGS,GEN,EWZ,cases,death_rate,deaths,cases7_per_100k,cases7_bl_per_100k,BL,county&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
+
+const apiUrlData2 = (ags) => `https://api.corona-zahlen.org/districts/${ encodeURIComponent( ags ) }/history/cases/19`
 
 const apiUrlData = (county, minDate) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/Covid19_RKI_Sums/FeatureServer/0/query?where=Landkreis+LIKE+%27%25${ encodeURIComponent( county ) }%25%27+AND+Meldedatum+%3E+%27${ encodeURIComponent( minDate ) }%27&objectIds=&time=&resultType=none&outFields=*&returnIdsOnly=false&returnUniqueIdsOnly=false&returnCountOnly=false&returnDistinctValues=false&cacheHint=false&orderByFields=Meldedatum&groupByFieldsForStatistics=&outStatistics=&having=&resultOffset=&resultRecordCount=&sqlFormat=none&f=json&token=`;
 
@@ -177,6 +179,7 @@ async function createWidget(items) {
 
   // extract information needed
   const cityName = attr.GEN; // name of 'Landkreis'
+  const ags = attr.AGS; // Allgemeiner Gemeindeschlüssel
   const ewz = attr.EWZ / 100000; // number of inhabitants
   const county = attr.county; // Landkreis
   const bundesLand = stateToAbbr[attr.BL];
@@ -192,12 +195,15 @@ async function createWidget(items) {
   date.setTime(date.getTime() - 20 * DAY_IN_MICROSECONDS);
   const minDate = ('0' + (date.getMonth() + 1)).slice(-2) + '-' + ('0' + date.getDate()).slice(-2) + '-' + date.getFullYear();
 
-  const countyData = await new Request(apiUrlData(county, minDate)).loadJSON();
+  // const countyData = await new Request(apiUrlData(county, minDate)).loadJSON();
+  const countyData = await new Request(apiUrlData2(ags)).loadJSON();
 
-  if (!countyData || !countyData.features || !countyData.features.length) {
+  if (!countyData || !countyData.data || !countyData.data[ags] || !countyData.data[ags].history.length) {
     list.addText('Keine Statistik gefunden.');
     return list;
   }
+
+  let history = countyData.data[ags].history
 
   // get vaccination status
   const vaccinationData = await new Request(vaccinationUrl(attr.BL)).loadJSON();
@@ -273,25 +279,27 @@ async function createWidget(items) {
 
   let dailyValues = new Array();
 
-  // calculate incidence in place.
-  for (let i = countyData.features.length - 1; i >= 6; i--) {
-    dailyValues[i] = countyData.features[i].attributes.AnzahlFall / ewz;
+  for (let i = history.length - 1; i >= 6; i--) {
+    dailyValues[i] = history[i].cases / ewz;
 
     let sum = 0;
 
     for (let j = 0; j < 7; j++) {
-      sum += countyData.features[i - j].attributes.AnzahlFall;
+      sum += history[i - j].cases;
     }
 
     sum /= ewz;
-    countyData.features[i].attributes.AnzahlFall = Math.round(sum);
+    history[i].cases = Math.round(sum);
   }
 
-  countyData.features.splice(0, 6);
+  history.splice(0, 6);
   dailyValues.splice(0, 6);
 
-  for (let i = 0; i < countyData.features.length; i++) {
-    let aux = countyData.features[i].attributes.AnzahlFall;
+  console.log(history);
+  console.log(dailyValues);
+
+  for (let i = 0; i < history.length; i++) {
+    let aux = history[i].cases;
 
     max = (aux > max || max == undefined ? aux : max);
   }
@@ -313,10 +321,10 @@ async function createWidget(items) {
   const graphBottom = graphHeight - 23;
   const barHeight = graphBottom - graphTop;
 
-  for (let i = 0; i < countyData.features.length; i++) {
-    const day = (new Date(countyData.features[i].attributes.Meldedatum)).getDate();
-    const dayOfWeek = (new Date(countyData.features[i].attributes.Meldedatum)).getDay();
-    const cases = countyData.features[i].attributes.AnzahlFall;
+  for (let i = 0; i < history.length; i++) {
+    const day = (new Date(history[i].date)).getDate();
+    const dayOfWeek = (new Date(history[i].date)).getDay();
+    const cases = history[i].cases;
     const delta = (cases - min) / diff;
 
     let drawColor;
@@ -332,7 +340,7 @@ async function createWidget(items) {
       dayColor = Color.white();
     }
 
-    if (i == countyData.features.length - 1) {
+    if (i == history.length - 1) {
 
       const delta = (incidenceBl - min) / diff;
       const y = graphBottom - (barHeight * delta);
