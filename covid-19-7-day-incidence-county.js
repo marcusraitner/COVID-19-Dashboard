@@ -201,11 +201,13 @@ async function createWidget(items) {
   const county = attr.county; // Landkreis
   const bundesLand = stateToAbbr[attr.BL];
   const incidenceBl = Math.round(attr.cases7_bl_per_100k);
-  const freeBeds = diviAttr.betten_frei;
-  const beds = diviAttr.betten_gesamt;
-  const usedBeds = diviAttr.betten_belegt;
-  const cases = diviAttr.faelle_covid_aktuell;
-  const casesBeatmet = diviAttr.faelle_covid_aktuell_beatmet;
+
+  const freeBeds = (!diviAttr.betten_frei ? 0 : diviAttr.betten_frei);
+  const beds = (!diviAttr.betten_gesamt ? 0 : diviAttr.betten_gesamt);
+  const usedBeds = (!diviAttr.betten_belegt ? 0 : diviAttr.betten_belegt);
+  const cases = (!diviAttr.faelle_covid_aktuell ? 0 : diviAttr.faelle_covid_aktuell);
+  const casesBeatmet = (!diviAttr.faelle_covid_aktuell_beatmet ? 0 : diviAttr.faelle_covid_aktuell_beatmet);
+
 
   if (debug) {
     console.log("Getting data for AGS: " + apiUrlData2(ags));
@@ -217,12 +219,16 @@ async function createWidget(items) {
     console.log(countyData);
   }
 
-  if (!countyData || !countyData.data || !countyData.data[ags] || !countyData.data[ags].history.length) {
+  if (!countyData || !countyData.data || !countyData.data[ags] || !countyData.data[ags].history.length) {
     list.addText('Keine Statistik gefunden.');
     return list;
   }
 
   let history = countyData.data[ags].history
+
+  if (debug) {
+    console.log("Getting vaccination data: " + vaccinationUrl(attr.BL));
+  }
 
   // get vaccination status
   const vaccinationData = await new Request(vaccinationUrl(attr.BL)).loadJSON();
@@ -230,6 +236,10 @@ async function createWidget(items) {
   if (!vaccinationData || !vaccinationData.data || !vaccinationData.data.length) {
     list.addText('Kein Impfstatus gefunden.');
     return list;
+  }
+
+  if (debug) {
+    console.log(vaccinationData);
   }
 
   const quoteInitial = Math.round(vaccinationData.data[0].value * 10) / 10;
@@ -313,6 +323,7 @@ async function createWidget(items) {
 
   history.splice(0, 6);
   dailyValues.splice(0, 6);
+
 
   for (let i = 0; i < history.length; i++) {
     let aux = history[i].cases;
@@ -437,10 +448,9 @@ async function createWidget(items) {
   let covidBedsWidth = cases / beds * bedsWidth;
   let beatmetBedsWidth = casesBeatmet / beds * bedsWidth;
 
-  freeBedsWidth = (freeBedsWidth == 0 ? tickWidth / 2 : freeBedsWidth);
-  covidBedsWidth = (covidBedsWidth == 0 ? tickWidth / 2 : covidBedsWidth);
-  beatmetBedsWidth = (beatmetBedsWidth == 0 ? tickWidth / 2 : beatmetBedsWidth);
-
+  freeBedsWidth = (!freeBedsWidth ? tickWidth / 2 : freeBedsWidth);
+  covidBedsWidth = (!covidBedsWidth ? tickWidth / 2 : covidBedsWidth);
+  beatmetBedsWidth = (!beatmetBedsWidth ? tickWidth / 2 : beatmetBedsWidth);
 
   // Line representing all beds
   let bedsLineRect = new Rect(0, bedsHeight / 2 - bedsLineWidth / 2, bedsWidth, bedsLineWidth);
@@ -453,6 +463,7 @@ async function createWidget(items) {
 
   // Portion representing free beds
   bedsLineRect = new Rect(bedsWidth - freeBedsWidth, bedsHeight / 2 - bedsLineWidth / 2, freeBedsWidth, bedsLineWidth);
+
   drawRoundedRect(drawContext, bedsLineRect, bedsLineFreeColor, 2);
 
   drawLine(drawContext, new Point(bedsWidth - freeBedsWidth, bedsHeight / 2 + bedsLineWidth / 2 + 5), new Point(bedsWidth - freeBedsWidth, bedsHeight / 2 - 40), tickWidth, new Color('#4D8802', 1));
