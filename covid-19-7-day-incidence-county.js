@@ -9,6 +9,9 @@
 // General Options Section
 //------------------------------------------------------------------------------
 
+// Set to true for debugging information in the console
+const debug = false;
+
 // Set to true for an image background, false for no image.
 const imageBackground = false;
 
@@ -64,9 +67,7 @@ const tickWidth = 4;
 // APIs
 const apiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_Landkreisdaten/FeatureServer/0/query?where=1%3D1&outFields=AGS,GEN,EWZ,cases,death_rate,deaths,cases7_per_100k,cases7_bl_per_100k,BL,county&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
 
-const apiUrlData2 = (ags) => `https://api.corona-zahlen.org/districts/${ encodeURIComponent( ags ) }/history/cases/19`
-
-const apiUrlData = (county, minDate) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/Covid19_RKI_Sums/FeatureServer/0/query?where=Landkreis+LIKE+%27%25${ encodeURIComponent( county ) }%25%27+AND+Meldedatum+%3E+%27${ encodeURIComponent( minDate ) }%27&objectIds=&time=&resultType=none&outFields=*&returnIdsOnly=false&returnUniqueIdsOnly=false&returnCountOnly=false&returnDistinctValues=false&cacheHint=false&orderByFields=Meldedatum&groupByFieldsForStatistics=&outStatistics=&having=&resultOffset=&resultRecordCount=&sqlFormat=none&f=json&token=`;
+const apiUrlData2 = (ags) => `https://api.corona-zahlen.org/districts/${ encodeURIComponent( ags ) }/history/cases/19`;
 
 const diviApiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/DIVI_Intensivregister_Landkreise/FeatureServer/0/query?where=1%3D1&outFields=*&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
 
@@ -153,8 +154,16 @@ async function createWidget(items) {
     }
   }
 
+  if (debug) {
+    console.log("Getting info for location: " + apiUrl(location));
+  }
+
   // get data for current location
   const locationData = await new Request(apiUrl(location)).loadJSON();
+
+  if (debug) {
+    console.log(locationData);
+  }
 
   if (!locationData || !locationData.features || !locationData.features.length) {
     errorText = list.addText('Keine Ergebnisse für den aktuellen Ort gefunden.');
@@ -165,8 +174,16 @@ async function createWidget(items) {
 
   const attr = locationData.features[0].attributes;
 
+  if (debug) {
+    console.log("Getting DIVI info for location: " + diviApiUrl(location));
+  }
+
   // get data for ICU beds of current location
   const diviLocationData = await new Request(diviApiUrl(location)).loadJSON();
+
+  if (debug) {
+    console.log(diviLocationData);
+  }
 
   if (!diviLocationData || !diviLocationData.features || !diviLocationData.features.length) {
     errorText = list.addText('Keine DIVI-Ergebnisse für den aktuellen Ort gefunden.');
@@ -190,13 +207,15 @@ async function createWidget(items) {
   const cases = diviAttr.faelle_covid_aktuell;
   const casesBeatmet = diviAttr.faelle_covid_aktuell_beatmet;
 
-  // get data for the last 21 days
-  const date = new Date();
-  date.setTime(date.getTime() - 20 * DAY_IN_MICROSECONDS);
-  const minDate = ('0' + (date.getMonth() + 1)).slice(-2) + '-' + ('0' + date.getDate()).slice(-2) + '-' + date.getFullYear();
+  if (debug) {
+    console.log("Getting data for AGS: " + apiUrlData2(ags));
+  }
 
-  // const countyData = await new Request(apiUrlData(county, minDate)).loadJSON();
   const countyData = await new Request(apiUrlData2(ags)).loadJSON();
+
+  if (debug) {
+    console.log(countyData);
+  }
 
   if (!countyData || !countyData.data || !countyData.data[ags] || !countyData.data[ags].history.length) {
     list.addText('Keine Statistik gefunden.');
@@ -294,9 +313,6 @@ async function createWidget(items) {
 
   history.splice(0, 6);
   dailyValues.splice(0, 6);
-
-  console.log(history);
-  console.log(dailyValues);
 
   for (let i = 0; i < history.length; i++) {
     let aux = history[i].cases;
