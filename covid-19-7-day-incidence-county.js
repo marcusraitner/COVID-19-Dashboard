@@ -65,15 +65,13 @@ const vertLineWeight = 42;
 const tickWidth = 4;
 
 // APIs
-const apiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_Landkreisdaten/FeatureServer/0/query?where=1%3D1&outFields=AGS,GEN,EWZ,cases,death_rate,deaths,cases7_per_100k,cases7_bl_per_100k,BL,county&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
+const apiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_Landkreisdaten/FeatureServer/0/query?where=1%3D1&outFields=AGS,GEN,EWZ,EWZ_BL,cases,death_rate,deaths,cases7_per_100k,cases7_bl_per_100k,BL,county&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
 
 const apiUrlData2 = (ags) => `https://api.corona-zahlen.org/districts/${ encodeURIComponent( ags ) }/history/cases/19`;
 
 const diviApiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/DIVI_Intensivregister_Landkreise/FeatureServer/0/query?where=1%3D1&outFields=*&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
 
-const vaccinationUrl = (county) => `https://api.vaccination-tracker.app/v1/de-vaccinations-current?key=quote_initial&geo=${ encodeURIComponent( county ) }`;
-
-const vaccinationBoosterUrl = (county) => `https://api.vaccination-tracker.app/v1/de-vaccinations-current?key=quote_booster&geo=${ encodeURIComponent( county ) }`;
+const vaccUrl = `https://interaktiv.morgenpost.de/data/corona/rki-vaccination.json`;
 
 const stateToAbbr = {
   'Baden-Württemberg': 'BW',
@@ -136,7 +134,10 @@ async function createWidget(items) {
 
   // get current location or use given args
   if (args.widgetParameter) {
-    console.log('get fixed lat/lon');
+    if (debug) {
+      console.log('get fixed lat/lon');
+    }
+
     const fixedCoordinates = args.widgetParameter.split(',').map(parseFloat);
     location = {
       latitude: fixedCoordinates[0],
@@ -146,7 +147,10 @@ async function createWidget(items) {
     Location.setAccuracyToThreeKilometers();
     try {
       location = await Location.current();
-      console.log('get current lat/lon');
+
+      if (debug) {
+        console.log('get current lat/lon');
+      }
     } catch (e) {
       errorText = list.addText('Keine Ortsdaten gefunden');
       errorText.textColor = Color.white();
@@ -198,8 +202,10 @@ async function createWidget(items) {
   const cityName = attr.GEN; // name of 'Landkreis'
   const ags = attr.AGS; // Allgemeiner Gemeindeschlüssel
   const ewz = attr.EWZ / 100000; // number of inhabitants
+  const ewzBL = attr.EWZ_BL
   const county = attr.county; // Landkreis
   const bundesLand = stateToAbbr[attr.BL];
+  const bl = attr.BL;
   const incidenceBl = Math.round(attr.cases7_bl_per_100k);
 
   const freeBeds = (!diviAttr.betten_frei ? 0 : diviAttr.betten_frei);
@@ -227,31 +233,32 @@ async function createWidget(items) {
   let history = countyData.data[ags].history
 
   if (debug) {
-    console.log("Getting vaccination data: " + vaccinationUrl(attr.BL));
+    console.log("Getting vaccination data: " + vaccUrl);
   }
 
-  // get vaccination status
-  const vaccinationData = await new Request(vaccinationUrl(attr.BL)).loadJSON();
-
-  if (!vaccinationData || !vaccinationData.data || !vaccinationData.data.length) {
-    list.addText('Kein Impfstatus gefunden.');
-    return list;
-  }
+  const vaccData = await new Request(vaccUrl).loadJSON();
 
   if (debug) {
-    console.log(vaccinationData);
+    console.log(vaccData);
   }
 
-  const quoteInitial = Math.round(vaccinationData.data[0].value * 10) / 10;
-
-  const vaccinationBoosterData = await new Request(vaccinationBoosterUrl(attr.BL)).loadJSON();
-
-  if (!vaccinationBoosterData || !vaccinationBoosterData.data || !vaccinationBoosterData.data.length) {
+  if (!vaccData) {
     list.addText('Kein Impfstatus gefunden.');
     return list;
   }
 
-  const quoteBooster = Math.round(vaccinationBoosterData.data[0].value * 10) / 10;
+  let quoteInitial = 0;
+  let quoteBooster = 0;
+
+  for (i = 0; i < vaccData.length; i++) {
+    if (vaccData[i].name == bl) {
+      quoteBooster = vaccData[i].cumsum2_latest;
+      quoteInitial = vaccData[i].cumsum_latest - quoteBooster;
+      quoteBooster = Math.round(quoteBooster * 1000 / ewzBL) / 10;
+      quoteInitial = Math.round(quoteInitial * 1000 / ewzBL) / 10;
+      break;
+    }
+  }
 
   let stack = list.addStack();
   stack.layoutHorizontally();
