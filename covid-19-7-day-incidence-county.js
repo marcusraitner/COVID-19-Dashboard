@@ -69,6 +69,8 @@ const apiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcg
 
 const apiUrlData2 = (ags) => `https://api.corona-zahlen.org/districts/${ encodeURIComponent( ags ) }/history/cases/19`;
 
+const apiUrlDistricts = `https://api.corona-zahlen.org/districts/`;
+
 const diviApiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/DIVI_Intensivregister_Landkreise/FeatureServer/0/query?where=1%3D1&outFields=*&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
 
 const vaccUrl = `https://interaktiv.morgenpost.de/data/corona/rki-vaccination.json`;
@@ -200,7 +202,7 @@ async function createWidget(items) {
 
   // extract information needed
   const cityName = attr.GEN; // name of 'Landkreis'
-  const ags = attr.AGS; // Allgemeiner Gemeindeschlüssel
+  let ags = attr.AGS; // Allgemeiner Gemeindeschlüssel
   const ewz = attr.EWZ / 100000; // number of inhabitants
   const ewzBL = attr.EWZ_BL
   const county = attr.county; // Landkreis
@@ -214,6 +216,15 @@ async function createWidget(items) {
   const cases = (!diviAttr.faelle_covid_aktuell ? 0 : diviAttr.faelle_covid_aktuell);
   const casesBeatmet = (!diviAttr.faelle_covid_aktuell_beatmet ? 0 : diviAttr.faelle_covid_aktuell_beatmet);
 
+  if (!ags) {
+    const districtsData = await new Request(apiUrlDistricts).loadJSON();
+
+    for (var index in districtsData.data) {
+      if (county == districtsData.data[index].county) {
+        ags = districtsData.data[index].ags;
+      }
+    }
+  }
 
   if (debug) {
     console.log("Getting data for AGS: " + apiUrlData2(ags));
