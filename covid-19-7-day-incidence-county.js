@@ -4,6 +4,9 @@
 // Licence: Robert Koch-Institut (RKI), dl-de/by-2-0
 // Author: Marcus Raitner (https://fuehrung-erfahren.de)
 // Source: https://gist.github.com/marcusraitner/a1b633625d1016498eaaab712461dfc4
+// Version: 1.0.1
+// Changelog:
+// * 1.0.1: Correction of layout of label for covid-beds
 
 //------------------------------------------------------------------------------
 // General Options Section
@@ -493,7 +496,14 @@ async function createWidget(items) {
   drawLine(drawContext, new Point(beatmetBedsWidth, bedsHeight / 2 - bedsLineWidth / 2 - 5), new Point(beatmetBedsWidth, bedsHeight / 2 + 20), tickWidth, colorUltra);
 
   let covidRect = new Rect(covidBedsWidth + 10, bedsHeight / 2 + 10, bedsWidth - covidBedsWidth, 22);
+
   drawContext.setTextAlignedLeft();
+  if (covidBedsWidth > bedsWidth / 2) {
+     covidRect = new Rect(0, bedsHeight / 2 + 10, covidBedsWidth - 10, 22);
+drawContext.setTextAlignedRight();
+
+  }
+
   drawContext.drawTextInRect('🦠COVID-19: ' + cases + ' (davon ' + casesBeatmet + ' beatmet)', covidRect);
 
   leftStack.addImage(drawContext.getImage());
