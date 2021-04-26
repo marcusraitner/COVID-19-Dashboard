@@ -7,6 +7,7 @@
 // Version: 1.0.1
 // Changelog:
 // * 1.0.1: Correction of layout of label for covid-beds
+// * 1.0.2: Bug-Fix for Saar-Pfalz-Kreis (using GEN instead of county for join)
 
 //------------------------------------------------------------------------------
 // General Options Section
@@ -206,6 +207,7 @@ async function createWidget(items) {
   const ewz = attr.EWZ / 100000; // number of inhabitants
   const ewzBL = attr.EWZ_BL
   const county = attr.county; // Landkreis
+  const gen = attr.GEN;
   const bundesLand = stateToAbbr[attr.BL];
   const bl = attr.BL;
   const incidenceBl = Math.round(attr.cases7_bl_per_100k);
@@ -225,7 +227,7 @@ async function createWidget(items) {
     console.log("Getting data for county: " + apiUrlData(county, minDate));
   }
 
-  const countyData = await new Request(apiUrlData(county, minDate)).loadJSON();
+  const countyData = await new Request(apiUrlData(gen, minDate)).loadJSON();
 
   if (debug) {
     console.log(countyData);
