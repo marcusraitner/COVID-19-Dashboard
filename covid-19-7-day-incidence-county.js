@@ -8,6 +8,7 @@
 // Changelog:
 // * 1.0.1: Correction of layout of label for covid-beds
 // * 1.0.2: Bug-Fix for Saar-Pfalz-Kreis (using GEN instead of county for join)
+// * 1.0.3: Bug-Fix for Landsberg a. Lech (now using both GEN and county)
 
 //------------------------------------------------------------------------------
 // General Options Section
@@ -224,18 +225,31 @@ async function createWidget(items) {
   const minDate = ('0' + (date.getMonth() + 1)).slice(-2) + '-' + ('0' + date.getDate()).slice(-2) + '-' + date.getFullYear();
 
   if (debug) {
-    console.log("Getting data for county: " + apiUrlData(county, minDate));
+    console.log("Getting data for county: " + apiUrlData(gen, minDate));
   }
 
-  const countyData = await new Request(apiUrlData(gen, minDate)).loadJSON();
+  let countyData = await new Request(apiUrlData(gen, minDate)).loadJSON();
 
   if (debug) {
     console.log(countyData);
   }
 
   if (!countyData || !countyData.features || !countyData.features.length) {
-    list.addText('Keine Statistik gefunden.');
-    return list;
+
+    if (debug) {
+      console.log("Getting data for county: " + apiUrlData(county, minDate));
+    }
+
+    countyData = await new Request(apiUrlData(county, minDate)).loadJSON();
+
+    if (debug) {
+      console.log(countyData);
+    }
+
+    if (!countyData || !countyData.features || !countyData.features.length) {
+      list.addText('Keine Statistik gefunden.');
+      return list;
+    }
   }
 
   if (debug) {
