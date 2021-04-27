@@ -9,6 +9,7 @@
 // * 1.0.1: Correction of layout of label for covid-beds
 // * 1.0.2: Bug-Fix for Saar-Pfalz-Kreis (using GEN instead of county for join)
 // * 1.0.3: Bug-Fix for Landsberg a. Lech (now using both GEN and county)
+// * 1.0.4: Bug-Fix. Now using AGS for join (county and GEN only as backup)
 
 //------------------------------------------------------------------------------
 // General Options Section
@@ -70,9 +71,11 @@ const vertLineWeight = 42;
 const tickWidth = 4;
 
 // APIs
-const apiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_Landkreisdaten/FeatureServer/0/query?where=1%3D1&outFields=GEN,EWZ,EWZ_BL,cases,death_rate,deaths,cases7_per_100k,cases7_bl_per_100k,BL,county&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
+const apiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_Landkreisdaten/FeatureServer/0/query?where=1%3D1&outFields=GEN,AGS,EWZ,EWZ_BL,cases,death_rate,deaths,cases7_per_100k,cases7_bl_per_100k,BL,county&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
 
 const apiUrlData = (county, minDate) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/Covid19_RKI_Sums/FeatureServer/0/query?where=Landkreis+LIKE+%27%25${ encodeURIComponent( county ) }%25%27+AND+Meldedatum+%3E+%27${ encodeURIComponent( minDate ) }%27&objectIds=&time=&resultType=none&outFields=*&returnIdsOnly=false&returnUniqueIdsOnly=false&returnCountOnly=false&returnDistinctValues=false&cacheHint=false&orderByFields=Meldedatum&groupByFieldsForStatistics=&outStatistics=&having=&resultOffset=&resultRecordCount=&sqlFormat=none&f=json&token=`;
+
+const apiUrlData2 = (ags, minDate) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/Covid19_RKI_Sums/FeatureServer/0/query?where=idLandkreis%3D+${ encodeURIComponent( ags ) }+AND+Meldedatum+%3E+%27${ encodeURIComponent( minDate ) }%27&objectIds=&time=&resultType=none&outFields=*&returnIdsOnly=false&returnUniqueIdsOnly=false&returnCountOnly=false&returnDistinctValues=false&cacheHint=false&orderByFields=Meldedatum&groupByFieldsForStatistics=&outStatistics=&having=&resultOffset=&resultRecordCount=&sqlFormat=none&f=json&token=`;
 
 const diviApiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/DIVI_Intensivregister_Landkreise/FeatureServer/0/query?where=1%3D1&outFields=*&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
 
@@ -209,6 +212,7 @@ async function createWidget(items) {
   const ewzBL = attr.EWZ_BL
   const county = attr.county; // Landkreis
   const gen = attr.GEN;
+  const ags = attr.AGS;
   const bundesLand = stateToAbbr[attr.BL];
   const bl = attr.BL;
   const incidenceBl = Math.round(attr.cases7_bl_per_100k);
@@ -223,33 +227,47 @@ async function createWidget(items) {
   const date = new Date();
   date.setTime(date.getTime() - 20 * DAY_IN_MICROSECONDS);
   const minDate = ('0' + (date.getMonth() + 1)).slice(-2) + '-' + ('0' + date.getDate()).slice(-2) + '-' + date.getFullYear();
+  let countyData;
 
-  if (debug) {
-    console.log("Getting data for county: " + apiUrlData(gen, minDate));
-  }
-
-  let countyData = await new Request(apiUrlData(gen, minDate)).loadJSON();
-
-  if (debug) {
-    console.log(countyData);
-  }
-
-  if (!countyData || !countyData.features || !countyData.features.length) {
-
+  if (ags) {
     if (debug) {
-      console.log("Getting data for county: " + apiUrlData(county, minDate));
+      console.log("Getting data for ags: " + apiUrlData2(ags, minDate));
     }
 
-    countyData = await new Request(apiUrlData(county, minDate)).loadJSON();
+    countyData = await new Request(apiUrlData2(ags, minDate)).loadJSON();
+
+    if (debug) {
+      console.log(countyData);
+    }
+
+  } else {
+    if (debug) {
+      console.log("Getting data for county: " + apiUrlData(gen, minDate));
+    }
+
+    countyData = await new Request(apiUrlData(gen, minDate)).loadJSON();
 
     if (debug) {
       console.log(countyData);
     }
 
     if (!countyData || !countyData.features || !countyData.features.length) {
-      list.addText('Keine Statistik gefunden.');
-      return list;
+
+      if (debug) {
+        console.log("Getting data for county: " + apiUrlData(county, minDate));
+      }
+
+      countyData = await new Request(apiUrlData(county, minDate)).loadJSON();
+
+      if (debug) {
+        console.log(countyData);
+      }
     }
+  }
+
+  if (!countyData || !countyData.features || !countyData.features.length) {
+    list.addText('Keine Statistik gefunden.');
+    return list;
   }
 
   if (debug) {
@@ -515,8 +533,8 @@ async function createWidget(items) {
 
   drawContext.setTextAlignedLeft();
   if (covidBedsWidth > bedsWidth / 2) {
-     covidRect = new Rect(0, bedsHeight / 2 + 10, covidBedsWidth - 10, 22);
-drawContext.setTextAlignedRight();
+    covidRect = new Rect(0, bedsHeight / 2 + 10, covidBedsWidth - 10, 22);
+    drawContext.setTextAlignedRight();
 
   }
 
