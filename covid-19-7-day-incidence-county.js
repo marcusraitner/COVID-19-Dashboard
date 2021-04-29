@@ -10,6 +10,7 @@
 // * 1.0.2: Bug-Fix for Saar-Pfalz-Kreis (using GEN instead of county for join)
 // * 1.0.3: Bug-Fix for Landsberg a. Lech (now using both GEN and county)
 // * 1.0.4: Bug-Fix. Now using AGS for join (county and GEN only as backup)
+// * 1.1.0: New API for vaccinations
 
 //------------------------------------------------------------------------------
 // General Options Section
@@ -79,7 +80,7 @@ const apiUrlData2 = (ags, minDate) => `https://services7.arcgis.com/mOBPykOjAyBO
 
 const diviApiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/DIVI_Intensivregister_Landkreise/FeatureServer/0/query?where=1%3D1&outFields=*&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
 
-const vaccUrl = `https://interaktiv.morgenpost.de/data/corona/rki-vaccination.json`;
+const vaccUrl = `https://api.corona-zahlen.org/vaccinations`;
 
 const stateToAbbr = {
   'Baden-Württemberg': 'BW',
@@ -91,7 +92,7 @@ const stateToAbbr = {
   'Hessen': 'HE',
   'Mecklenburg-Vorpommern': 'MV',
   'Niedersachsen': 'NI',
-  'Nordrhein-Westfalen': 'NRW',
+  'Nordrhein-Westfalen': 'NW',
   'Rheinland-Pfalz': 'RP',
   'Saarland': 'SL',
   'Sachsen': 'SN',
@@ -165,6 +166,9 @@ async function createWidget(items) {
       return list;
     }
   }
+
+  // location.latitude = 48.3977784;
+  // location.longitude = 8.0793743;
 
   if (debug) {
     console.log("Getting info for location: " + apiUrl(location));
@@ -265,6 +269,7 @@ async function createWidget(items) {
     }
   }
 
+
   if (!countyData || !countyData.features || !countyData.features.length) {
     list.addText('Keine Statistik gefunden.');
     return list;
@@ -285,18 +290,8 @@ async function createWidget(items) {
     return list;
   }
 
-  let quoteInitial = 0;
-  let quoteBooster = 0;
-
-  for (i = 0; i < vaccData.length; i++) {
-    if (vaccData[i].name == bl) {
-      quoteBooster = vaccData[i].cumsum2_latest;
-      quoteInitial = vaccData[i].cumsum_latest - quoteBooster;
-      quoteBooster = Math.round(quoteBooster * 1000 / ewzBL) / 10;
-      quoteInitial = Math.round(quoteInitial * 1000 / ewzBL) / 10;
-      break;
-    }
-  }
+  let quoteInitial = Math.round(vaccData.data.states[bundesLand].quote * 1000) / 10;
+  let quoteBooster = Math.round(vaccData.data.states[bundesLand].secondVaccination.quote * 1000) / 10;
 
   let stack = list.addStack();
   stack.layoutHorizontally();
@@ -333,7 +328,6 @@ async function createWidget(items) {
 
   vaccinationTextRect = new Rect(6, 5, vaccinationWidth - 10, 25);
   drawTextR(drawContext, bundesLand, vaccinationTextRect, Color.white(), Font.mediumSystemFont(22));
-
   let vaccinationRect = new Rect(0, (1 - quoteInitial / 100) * vaccinationBottom, vaccinationWidth, vaccinationBottom * quoteInitial / 100);
   drawRoundedRect(drawContext, vaccinationRect, vaccinationColor, 4);
 
