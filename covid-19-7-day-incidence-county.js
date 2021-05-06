@@ -11,6 +11,7 @@
 // * 1.0.3: Bug-Fix for Landsberg a. Lech (now using both GEN and county)
 // * 1.0.4: Bug-Fix. Now using AGS for join (county and GEN only as backup)
 // * 1.1.0: New API for vaccinations
+// * 1.2.0: New colors and a new step for incidence 165
 
 //------------------------------------------------------------------------------
 // General Options Section
@@ -25,12 +26,38 @@ const imageBackground = false;
 // Set to true to reset the widget's background image.
 const forceImageUpdate = false;
 
-// colors for incidence highlighting
-const colorNorm = new Color('#cccccf', 1) // < 35
-const colorLow = new Color('#dea657', 1); // < 50//
-const colorMed = new Color('#c9533c', 1); // < 100
-const colorHigh = new Color('#b02c30', 1); // < 200
-const colorUltra = new Color('#6d1d21', 1); // >= 200
+
+// palette found here: https://coolors.co/03071e-370617-6a040f-9d0208-d00000-dc2f02-e85d04-f48c06-faa307-ffba08
+
+const incidenceColors = [{
+    lower: 0,
+    color: new Color('#cccccf', 1)
+  },
+  {
+    lower: 35,
+    color: new Color('#FFBA08', 1)
+  },
+  {
+    lower: 50,
+    color: new Color('#F48C06', 1)
+  },
+  {
+    lower: 100,
+    color: new Color('#E85D04', 1)
+  },
+  {
+    lower: 165,
+    color: new Color('#DC2F02', 1)
+  },
+  {
+    lower: 200,
+    color: new Color('#9D0208', 1)
+  }
+];
+
+// colors for covid beds highlighting
+const colorCovidBed = new Color('#DC2F02', 1);
+const colorCovidBedVentilation = new Color('#9D0208', 1);
 
 // other colors
 const accentColor2 = Color.lightGray(); // used for weekends
@@ -166,9 +193,6 @@ async function createWidget(items) {
       return list;
     }
   }
-
-  // location.latitude = 48.3977784;
-  // location.longitude = 8.0793743;
 
   if (debug) {
     console.log("Getting info for location: " + apiUrl(location));
@@ -347,7 +371,10 @@ async function createWidget(items) {
 
   let dailyValues = new Array();
 
+
   for (let i = countyData.features.length - 1; i >= 6; i--) {
+    console.log(countyData.features[i].attributes.Meldedatum + ': ' + countyData.features[i].attributes.AnzahlFall);
+
     dailyValues[i] = countyData.features[i].attributes.AnzahlFall / ewz;
 
     let sum = 0;
@@ -362,7 +389,6 @@ async function createWidget(items) {
 
   countyData.features.splice(0, 6);
   dailyValues.splice(0, 6);
-
 
   for (let i = 0; i < countyData.features.length; i++) {
     let aux = countyData.features[i].attributes.AnzahlFall;
@@ -420,15 +446,7 @@ async function createWidget(items) {
         x0 = spaceBetweenDays * i
       }
 
-      if (incidenceBl < 50) {
-        drawColor = colorLow;
-      } else if (incidenceBl < 100) {
-        drawColor = colorMed;
-      } else if (incidenceBl < 200) {
-        drawColor = colorHigh;
-      } else {
-        drawColor = colorUltra;
-      }
+      drawColor = getColor(incidenceBl);
 
       let rect = new Rect(spaceBetweenDays * i + 2, graphBottom - (barHeight * delta), widgetWidth - spaceBetweenDays * (i + 1) - 4, barHeight * delta - 2);
 
@@ -447,18 +465,7 @@ async function createWidget(items) {
       drawTextR(graphDrawContext, incidenceBl, bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(21));
     }
 
-    if (cases < 35) {
-      drawColor = colorNorm;
-    } else if (cases < 50) {
-      drawColor = colorLow;
-    } else if (cases < 100) {
-      drawColor = colorMed;
-    } else if (cases < 200) {
-      drawColor = colorHigh;
-    } else {
-      drawColor = colorUltra;
-    }
-
+    drawColor = getColor(cases);
 
     let rect = new Rect(spaceBetweenDays * i, graphBottom - (barHeight * delta), vertLineWeight, barHeight * delta);
     drawRoundedRect(graphDrawContext, rect, drawColor, 4);
@@ -513,15 +520,15 @@ async function createWidget(items) {
 
   // Portion representing covid patients
   bedsLineRect = new Rect(0, bedsHeight / 2 - bedsLineWidth / 2, covidBedsWidth, bedsLineWidth);
-  drawRoundedRect(drawContext, bedsLineRect, colorHigh, 2);
+  drawRoundedRect(drawContext, bedsLineRect, colorCovidBed, 2);
 
-  drawLine(drawContext, new Point(covidBedsWidth, bedsHeight / 2 - bedsLineWidth / 2 - 5), new Point(covidBedsWidth, bedsHeight / 2 + 38), tickWidth, colorHigh);
+  drawLine(drawContext, new Point(covidBedsWidth, bedsHeight / 2 - bedsLineWidth / 2 - 5), new Point(covidBedsWidth, bedsHeight / 2 + 38), tickWidth, colorCovidBed);
 
   // Portion representing cases beatmet
   bedsLineRect = new Rect(0, bedsHeight / 2 - bedsLineWidth / 2, beatmetBedsWidth, bedsLineWidth);
-  drawRoundedRect(drawContext, bedsLineRect, colorUltra, 2);
+  drawRoundedRect(drawContext, bedsLineRect, colorCovidBedVentilation, 2);
 
-  drawLine(drawContext, new Point(beatmetBedsWidth, bedsHeight / 2 - bedsLineWidth / 2 - 5), new Point(beatmetBedsWidth, bedsHeight / 2 + 20), tickWidth, colorUltra);
+  drawLine(drawContext, new Point(beatmetBedsWidth, bedsHeight / 2 - bedsLineWidth / 2 - 5), new Point(beatmetBedsWidth, bedsHeight / 2 + 20), tickWidth, colorCovidBedVentilation);
 
   let covidRect = new Rect(covidBedsWidth + 10, bedsHeight / 2 + 10, bedsWidth - covidBedsWidth, 22);
 
@@ -560,4 +567,18 @@ function drawRoundedRect(drawContext, rect, color, radius) {
   drawContext.addPath(path);
   drawContext.setFillColor(color);
   drawContext.fillPath();
+}
+
+function getColor(value) {
+  let col = incidenceColors[0].color;
+
+  for (i = 1; i < incidenceColors.length; i++) {
+    if (value >= incidenceColors[i].lower) {
+      col = incidenceColors[i].color;
+    } else {
+      break
+    }
+  }
+
+  return col;
 }
