@@ -12,6 +12,8 @@
 // * 1.0.4: Bug-Fix. Now using AGS for join (county and GEN only as backup)
 // * 1.1.0: New API for vaccinations
 // * 1.2.0: New colors and a new step for incidence 165
+// * 1.3.0: New feature: Show also incidence for Germany with "showGermanyValue = true"
+
 
 //------------------------------------------------------------------------------
 // General Options Section
@@ -26,9 +28,10 @@ const imageBackground = false;
 // Set to true to reset the widget's background image.
 const forceImageUpdate = false;
 
+// Show also the incidence for Germany in total
+const showGermanyValue = false;
 
 // palette found here: https://coolors.co/03071e-370617-6a040f-9d0208-d00000-dc2f02-e85d04-f48c06-faa307-ffba08
-
 const incidenceColors = [{
     lower: 0,
     color: new Color('#cccccf', 1)
@@ -108,6 +111,8 @@ const apiUrlData2 = (ags, minDate) => `https://services7.arcgis.com/mOBPykOjAyBO
 const diviApiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/DIVI_Intensivregister_Landkreise/FeatureServer/0/query?where=1%3D1&outFields=*&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
 
 const vaccUrl = `https://api.corona-zahlen.org/vaccinations`;
+
+const germanyUrl = `https://api.corona-zahlen.org/germany`;
 
 const stateToAbbr = {
   'Baden-Württemberg': 'BW',
@@ -195,6 +200,15 @@ async function createWidget(items) {
   }
 
   if (debug) {
+    console.log("Getting data for Germany: " + germanyUrl);
+  }
+
+  const germanyData = await new Request(germanyUrl).loadJSON();
+
+  if (debug) {
+    console.log(germanyData);
+  }
+  if (debug) {
     console.log("Getting info for location: " + apiUrl(location));
   }
 
@@ -253,8 +267,14 @@ async function createWidget(items) {
 
   // get data for the last 21 days
   const date = new Date();
-  date.setTime(date.getTime() - 20 * DAY_IN_MICROSECONDS);
+  if (showGermanyValue) {
+    date.setTime(date.getTime() - 19 * DAY_IN_MICROSECONDS);
+  } else {
+    date.setTime(date.getTime() - 20 * DAY_IN_MICROSECONDS);
+  }
+
   const minDate = ('0' + (date.getMonth() + 1)).slice(-2) + '-' + ('0' + date.getDate()).slice(-2) + '-' + date.getFullYear();
+
   let countyData;
 
   if (ags) {
@@ -373,8 +393,6 @@ async function createWidget(items) {
 
 
   for (let i = countyData.features.length - 1; i >= 6; i--) {
-    console.log(countyData.features[i].attributes.Meldedatum + ': ' + countyData.features[i].attributes.AnzahlFall);
-
     dailyValues[i] = countyData.features[i].attributes.AnzahlFall / ewz;
 
     let sum = 0;
@@ -400,11 +418,15 @@ async function createWidget(items) {
     max = incidenceBl;
   }
 
+  if (showGermanyValue && germanyData.weekIncidence > max) {
+    max = germanyData.weekIncidence;
+  }
+
   min = 0;
   diff = max - min;
 
   let graphDrawContext = new DrawContext();
-  graphDrawContext.size = new Size(widgetWidth - spaceBetweenDays, graphHeight);
+  graphDrawContext.size = new Size(widgetWidth - vertLineWeight, graphHeight);
   graphDrawContext.opaque = false;
   graphDrawContext.setFont(Font.mediumSystemFont(22));
   graphDrawContext.setTextAlignedCenter();
@@ -433,24 +455,40 @@ async function createWidget(items) {
     }
 
     if (i == countyData.features.length - 1) {
+      if (showGermanyValue) {
+        const delta = (germanyData.weekIncidence - min) / diff;
+        const y = graphBottom - (barHeight * delta);
+        const width = vertLineWeight + 5;
+        const x = widgetWidth - vertLineWeight - width - 7;
+
+        drawColor = getColor(germanyData.weekIncidence);
+
+        let rect = new Rect(x, graphBottom - (barHeight * delta), width, barHeight * delta - 2);
+
+        drawRoundedRect(graphDrawContext, rect, new Color("#6c757d", 1), 4);
+        let path = new Path();
+
+        path.addRoundedRect(rect, 4, 4);
+        graphDrawContext.addPath(path);
+        graphDrawContext.setLineWidth(4);
+        graphDrawContext.setStrokeColor(drawColor);
+        graphDrawContext.strokePath();
+
+        const bundesLandRect = new Rect(x, y + 3, width, 23);
+        drawTextR(graphDrawContext, "DE", bundesLandRect, dayColor, Font.mediumSystemFont(21));
+        const bundesLandIncidenceRect = new Rect(x, y - 28, width, 23);
+        drawTextR(graphDrawContext, Math.round(germanyData.weekIncidence), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(21));
+      }
 
       const delta = (incidenceBl - min) / diff;
       const y = graphBottom - (barHeight * delta);
       const x1 = spaceBetweenDays * (i + 1) + spaceBetweenDays / 3;
 
-      let x0;
-
-      if (y >= casesRect.origin.y - 5 && y <= casesRect.origin.y + casesRect.height + 5) {
-        x0 = spaceBetweenDays * i + vertLineWeight;
-      } else {
-        x0 = spaceBetweenDays * i
-      }
-
       drawColor = getColor(incidenceBl);
 
-      let rect = new Rect(spaceBetweenDays * i + 2, graphBottom - (barHeight * delta), widgetWidth - spaceBetweenDays * (i + 1) - 4, barHeight * delta - 2);
+      let rect = new Rect(spaceBetweenDays * i + 2, graphBottom - (barHeight * delta), vertLineWeight * 2.5, barHeight * delta - 2);
 
-      drawRoundedRect(graphDrawContext, rect, new Color("#000000", .4), 4);
+      drawRoundedRect(graphDrawContext, rect, new Color("#343a40", 1), 4);
       let path = new Path();
 
       path.addRoundedRect(rect, 4, 4);
