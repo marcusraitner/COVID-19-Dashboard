@@ -13,7 +13,7 @@
 // * 1.1.0: New API for vaccinations
 // * 1.2.0: New colors and a new step for incidence 165
 // * 1.3.0: New feature: Show also incidence for Germany with "showGermanyValue = true"
-
+// * 1.4.0: New feature: R-Value for Germany. Bugfix for date of incidence
 
 //------------------------------------------------------------------------------
 // General Options Section
@@ -436,8 +436,10 @@ async function createWidget(items) {
   const barHeight = graphBottom - graphTop;
 
   for (let i = 0; i < countyData.features.length; i++) {
-    const day = (new Date(countyData.features[i].attributes.Meldedatum)).getDate();
-    const dayOfWeek = (new Date(countyData.features[i].attributes.Meldedatum)).getDay();
+    let date = new Date(countyData.features[i].attributes.Meldedatum);
+    date.setDate(date.getDate() + 1);
+    const day = date.getDate();
+    const dayOfWeek = date.getDay();
     const cases = countyData.features[i].attributes.AnzahlFall;
     const delta = (cases - min) / diff;
 
@@ -458,8 +460,8 @@ async function createWidget(items) {
       if (showGermanyValue) {
         const delta = (germanyData.weekIncidence - min) / diff;
         const y = graphBottom - (barHeight * delta);
-        const width = vertLineWeight + 5;
-        const x = widgetWidth - vertLineWeight - width - 7;
+        const width = vertLineWeight + 7;
+        const x = widgetWidth - vertLineWeight - width - 4;
 
         drawColor = getColor(germanyData.weekIncidence);
 
@@ -478,6 +480,12 @@ async function createWidget(items) {
         drawTextR(graphDrawContext, "DE", bundesLandRect, dayColor, Font.mediumSystemFont(21));
         const bundesLandIncidenceRect = new Rect(x, y - 28, width, 23);
         drawTextR(graphDrawContext, Math.round(germanyData.weekIncidence), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(21));
+
+        let rRect = new Rect(x, graphBottom - 28, width, 23);
+        drawTextR(graphDrawContext, germanyData.r.value.toFixed(2), rRect, dayColor, Font.mediumSystemFont(21));
+
+        rRect = new Rect(x, graphBottom - 50, width, 23);
+        drawTextR(graphDrawContext, "R", rRect, dayColor, Font.mediumSystemFont(21));
       }
 
       const delta = (incidenceBl - min) / diff;
