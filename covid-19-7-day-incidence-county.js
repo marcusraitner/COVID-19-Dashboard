@@ -29,7 +29,10 @@ const imageBackground = false;
 const forceImageUpdate = false;
 
 // Show also the incidence for Germany in total
-const showGermanyValue = false;
+var showGermanyValue = false;
+
+// Show also the R-Value (only if showGermanyValue == true)
+var showRValue = true;
 
 // palette found here: https://coolors.co/03071e-370617-6a040f-9d0208-d00000-dc2f02-e85d04-f48c06-faa307-ffba08
 const incidenceColors = [{
@@ -173,18 +176,42 @@ async function createWidget(items) {
 
   list.setPadding(0, 0, 0, 0);
 
-  // get current location or use given args
+  // Parse parameters
   if (args.widgetParameter) {
-    if (debug) {
-      console.log('get fixed lat/lon');
-    }
+    const params = args.widgetParameter.split(';');
 
-    const fixedCoordinates = args.widgetParameter.split(',').map(parseFloat);
-    location = {
-      latitude: fixedCoordinates[0],
-      longitude: fixedCoordinates[1]
-    };
-  } else {
+    for (var i = 0; i < params.length; i++) {
+      const p = params[i].split('=');
+      if (p[0].trim().toLowerCase() == "loc") {
+        const fixedCoordinates = p[1].split(',').map(parseFloat);
+        location = {
+          latitude: fixedCoordinates[0],
+          longitude: fixedCoordinates[1]
+        };
+      } else if (p[0].trim().toLowerCase() == "de") {
+        if (p[1].trim().toLowerCase() == "y") {
+          showGermanyValue = true;
+        } else {
+          showGermanyValue = false;
+        }
+      } else if (p[0].trim().toLowerCase() == "rwert") {
+        if (p[1].trim().toLowerCase() == "y") {
+          showRValue = true;
+        } else {
+          showRValue = false;
+        }
+      } else if (p.length == 1) {
+        // for compatability with old syntax
+        const fixedCoordinates = p[0].split(',').map(parseFloat);
+        location = {
+          latitude: fixedCoordinates[0],
+          longitude: fixedCoordinates[1]
+        };
+      }
+    }
+  }
+
+  if (!location) {
     Location.setAccuracyToThreeKilometers();
     try {
       location = await Location.current();
@@ -481,11 +508,13 @@ async function createWidget(items) {
         const bundesLandIncidenceRect = new Rect(x, y - 28, width, 23);
         drawTextR(graphDrawContext, Math.round(germanyData.weekIncidence), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(21));
 
-        let rRect = new Rect(x, graphBottom - 28, width, 23);
-        drawTextR(graphDrawContext, germanyData.r.value.toFixed(2), rRect, dayColor, Font.mediumSystemFont(21));
+        if (showRValue) {
+          let rRect = new Rect(x, graphBottom - 28, width, 23);
+          drawTextR(graphDrawContext, germanyData.r.value.toFixed(2), rRect, dayColor, Font.mediumSystemFont(21));
 
-        rRect = new Rect(x, graphBottom - 50, width, 23);
-        drawTextR(graphDrawContext, "R", rRect, dayColor, Font.mediumSystemFont(21));
+          rRect = new Rect(x, graphBottom - 50, width, 23);
+          drawTextR(graphDrawContext, "R", rRect, dayColor, Font.mediumSystemFont(21));
+        }
       }
 
       const delta = (incidenceBl - min) / diff;
