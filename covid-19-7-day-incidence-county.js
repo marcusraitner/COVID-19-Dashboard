@@ -34,6 +34,12 @@ var showGermanyValue = false;
 // Show also the R-Value (only if showGermanyValue == true)
 var showRValue = true;
 
+// Toggle showing of vaccination status
+var showVaccination = true;
+
+// Toggle showing of ICU beds
+var showIcu = true;
+
 // palette found here: https://coolors.co/03071e-370617-6a040f-9d0208-d00000-dc2f02-e85d04-f48c06-faa307-ffba08
 const incidenceColors = [{
     lower: 0,
@@ -99,10 +105,11 @@ const widgetHeight = 338;
 const widgetWidth = 720;
 const graphLow = 0;
 const graphHeight = 170;
-const spaceBetweenDays = 47;
+const spaceBetweenDays = 50;
 const bedsLineWidth = 12;
-const vertLineWeight = 42;
+const vertLineWeight = 45;
 const tickWidth = 4;
+const vaccinationWidth = 90;
 
 // APIs
 const apiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_Landkreisdaten/FeatureServer/0/query?where=1%3D1&outFields=GEN,AGS,EWZ,EWZ_BL,cases,death_rate,deaths,cases7_per_100k,cases7_bl_per_100k,BL,county&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
@@ -194,11 +201,23 @@ async function createWidget(items) {
         } else {
           showGermanyValue = false;
         }
-      } else if (p[0].trim().toLowerCase() == "rwert") {
+      } else if (p[0].trim().toLowerCase() == "rval") {
         if (p[1].trim().toLowerCase() == "y") {
           showRValue = true;
         } else {
           showRValue = false;
+        }
+      } else if (p[0].trim().toLowerCase() == "vac") {
+        if (p[1].trim().toLowerCase() == "y") {
+          showVaccination = true;
+        } else {
+          showVaccination = false;
+        }
+      } else if (p[0].trim().toLowerCase() == "beds") {
+        if (p[1].trim().toLowerCase() == "y") {
+          showIcu = true;
+        } else {
+          showIcu = false;
         }
       } else if (p.length == 1) {
         // for compatability with old syntax
@@ -255,26 +274,6 @@ async function createWidget(items) {
 
   const attr = locationData.features[0].attributes;
 
-  if (debug) {
-    console.log("Getting DIVI info for location: " + diviApiUrl(location));
-  }
-
-  // get data for ICU beds of current location
-  const diviLocationData = await new Request(diviApiUrl(location)).loadJSON();
-
-  if (debug) {
-    console.log(diviLocationData);
-  }
-
-  if (!diviLocationData || !diviLocationData.features || !diviLocationData.features.length) {
-    errorText = list.addText('Keine DIVI-Ergebnisse für den aktuellen Ort gefunden.');
-    errorText.textColor = Color.white();
-    console.log(diviLocationData);
-    return list;
-  }
-
-  const diviAttr = diviLocationData.features[0].attributes;
-
   // extract information needed
   const cityName = attr.GEN; // name of 'Landkreis'
   const ewz = attr.EWZ / 100000; // number of inhabitants
@@ -286,14 +285,9 @@ async function createWidget(items) {
   const bl = attr.BL;
   const incidenceBl = Math.round(attr.cases7_bl_per_100k);
 
-  const freeBeds = (!diviAttr.betten_frei ? 0 : diviAttr.betten_frei);
-  const beds = (!diviAttr.betten_gesamt ? 0 : diviAttr.betten_gesamt);
-  const usedBeds = (!diviAttr.betten_belegt ? 0 : diviAttr.betten_belegt);
-  const cases = (!diviAttr.faelle_covid_aktuell ? 0 : diviAttr.faelle_covid_aktuell);
-  const casesBeatmet = (!diviAttr.faelle_covid_aktuell_beatmet ? 0 : diviAttr.faelle_covid_aktuell_beatmet);
-
-  // get data for the last 21 days
+  // get data for the last days
   const date = new Date();
+
   if (showGermanyValue) {
     date.setTime(date.getTime() - 19 * DAY_IN_MICROSECONDS);
   } else {
@@ -340,29 +334,10 @@ async function createWidget(items) {
     }
   }
 
-
   if (!countyData || !countyData.features || !countyData.features.length) {
     list.addText('Keine Statistik gefunden.');
     return list;
   }
-
-  if (debug) {
-    console.log("Getting vaccination data: " + vaccUrl);
-  }
-
-  const vaccData = await new Request(vaccUrl).loadJSON();
-
-  if (debug) {
-    console.log(vaccData);
-  }
-
-  if (!vaccData) {
-    list.addText('Kein Impfstatus gefunden.');
-    return list;
-  }
-
-  let quoteInitial = Math.round(vaccData.data.states[bundesLand].quote * 1000) / 10;
-  let quoteBooster = Math.round(vaccData.data.states[bundesLand].secondVaccination.quote * 1000) / 10;
 
   let stack = list.addStack();
   stack.layoutHorizontally();
@@ -370,54 +345,74 @@ async function createWidget(items) {
 
   let leftStack = stack.addStack();
   leftStack.layoutVertically();
-  leftStack.setPadding(7, 7, 7, 0);
-
-  stack.addSpacer(10);
-
-  let rightStack = stack.addStack();
-  rightStack.setPadding(0, 0, 0, 0);
-  rightStack.backgroundGradient = vaccinationGradient;
-  rightStack.cornerRadius = 4;
 
   let incidenceText = leftStack.addText('🦠 7-Tage-Inzidenz'.toUpperCase() + ' – ' + county);
   incidenceText.font = Font.semiboldRoundedSystemFont(11);
   incidenceText.textColor = Color.white();
-  leftStack.addSpacer();
+  leftStack.addSpacer(); // FIXME: only when icu beds are shown.
 
-  // Add vaccination status
-  const vaccinationHeight = widgetHeight - 10;
-  const vaccinationBottom = vaccinationHeight;
-  const vaccinationWidth = 90;
-  const vaccinationBarWidth = 20;
+  if (showVaccination) {
+    if (debug) {
+      console.log("Getting vaccination data: " + vaccUrl);
+    }
 
-  let drawContext = new DrawContext();
-  drawContext.size = new Size(vaccinationWidth, vaccinationHeight);
-  drawContext.opaque = false;
+    const vaccData = await new Request(vaccUrl).loadJSON();
 
-  let vaccinationTextRect = new Rect(15, 10, vaccinationWidth - 10, 55);
-  drawTextR(drawContext, '💉', vaccinationTextRect, Color.white(), Font.mediumSystemFont(50));
+    if (debug) {
+      console.log(vaccData);
+    }
 
-  vaccinationTextRect = new Rect(6, 5, vaccinationWidth - 10, 25);
-  drawTextR(drawContext, bundesLand, vaccinationTextRect, Color.white(), Font.mediumSystemFont(22));
-  let vaccinationRect = new Rect(0, (1 - quoteInitial / 100) * vaccinationBottom, vaccinationWidth, vaccinationBottom * quoteInitial / 100);
-  drawRoundedRect(drawContext, vaccinationRect, vaccinationColor, 4);
+    if (!vaccData) {
+      list.addText('Kein Impfstatus gefunden.');
+      return list;
+    }
 
-  vaccinationTextRect = new Rect(10, (1 - quoteInitial / 100) * vaccinationBottom - 26, vaccinationWidth, 22);
-  drawTextR(drawContext, quoteInitial + ' %', vaccinationTextRect, Color.white(), Font.regularSystemFont(22));
+    let quoteInitial = Math.round(vaccData.data.states[bundesLand].quote * 1000) / 10;
+    let quoteBooster = Math.round(vaccData.data.states[bundesLand].secondVaccination.quote * 1000) / 10;
 
-  let vaccinationBoosterRect = new Rect(0, (1 - quoteBooster / 100) * vaccinationBottom, vaccinationWidth, vaccinationBottom * quoteBooster / 100);
-  drawRoundedRect(drawContext, vaccinationBoosterRect, vaccinationBoosterColor, 4);
-  vaccinationTextRect = new Rect(10, (1 - quoteBooster / 100) * vaccinationBottom - 21, vaccinationWidth, 22);
-  drawTextR(drawContext, quoteBooster + ' %', vaccinationTextRect, Color.white(), Font.regularSystemFont(22));
+    leftStack.setPadding(7, 7, 7, 0);
+    stack.addSpacer(10);
 
-  drawLine(drawContext, new Point(1, 0), new Point(1, vaccinationHeight), 2, Color.lightGray());
+    let rightStack = stack.addStack();
+    rightStack.setPadding(0, 0, 0, 0);
+    rightStack.backgroundGradient = vaccinationGradient;
+    rightStack.cornerRadius = 4;
 
-  rightStack.addImage(drawContext.getImage());
+    // Add vaccination status
+    const vaccinationHeight = widgetHeight - 10;
+    const vaccinationBottom = vaccinationHeight;
+    const vaccinationBarWidth = 20;
+
+    let drawContext = new DrawContext();
+    drawContext.size = new Size(vaccinationWidth, vaccinationHeight);
+    drawContext.opaque = false;
+
+    let vaccinationTextRect = new Rect(15, 10, vaccinationWidth - 10, 55);
+    drawTextR(drawContext, '💉', vaccinationTextRect, Color.white(), Font.mediumSystemFont(50));
+
+    vaccinationTextRect = new Rect(6, 5, vaccinationWidth - 10, 25);
+    drawTextR(drawContext, bundesLand, vaccinationTextRect, Color.white(), Font.mediumSystemFont(22));
+    let vaccinationRect = new Rect(0, (1 - quoteInitial / 100) * vaccinationBottom, vaccinationWidth, vaccinationBottom * quoteInitial / 100);
+    drawRoundedRect(drawContext, vaccinationRect, vaccinationColor, 4);
+
+    vaccinationTextRect = new Rect(10, (1 - quoteInitial / 100) * vaccinationBottom - 26, vaccinationWidth, 22);
+    drawTextR(drawContext, quoteInitial + ' %', vaccinationTextRect, Color.white(), Font.regularSystemFont(22));
+
+    let vaccinationBoosterRect = new Rect(0, (1 - quoteBooster / 100) * vaccinationBottom, vaccinationWidth, vaccinationBottom * quoteBooster / 100);
+    drawRoundedRect(drawContext, vaccinationBoosterRect, vaccinationBoosterColor, 4);
+    vaccinationTextRect = new Rect(10, (1 - quoteBooster / 100) * vaccinationBottom - 21, vaccinationWidth, 22);
+    drawTextR(drawContext, quoteBooster + ' %', vaccinationTextRect, Color.white(), Font.regularSystemFont(22));
+
+    drawLine(drawContext, new Point(1, 0), new Point(1, vaccinationHeight), 2, Color.lightGray());
+
+    rightStack.addImage(drawContext.getImage());
+  } else {
+    leftStack.setPadding(7, 7, 7, 7);
+  }
 
   let min, max, diff;
 
   let dailyValues = new Array();
-
 
   for (let i = countyData.features.length - 1; i >= 6; i--) {
     dailyValues[i] = countyData.features[i].attributes.AnzahlFall / ewz;
@@ -453,7 +448,7 @@ async function createWidget(items) {
   diff = max - min;
 
   let graphDrawContext = new DrawContext();
-  graphDrawContext.size = new Size(widgetWidth - vertLineWeight, graphHeight);
+  graphDrawContext.size = new Size(widgetWidth, graphHeight);
   graphDrawContext.opaque = false;
   graphDrawContext.setFont(Font.mediumSystemFont(22));
   graphDrawContext.setTextAlignedCenter();
@@ -488,7 +483,7 @@ async function createWidget(items) {
         const delta = (germanyData.weekIncidence - min) / diff;
         const y = graphBottom - (barHeight * delta);
         const width = vertLineWeight + 7;
-        const x = widgetWidth - vertLineWeight - width - 4;
+        const x = widgetWidth - width - 4;
 
         drawColor = getColor(germanyData.weekIncidence);
 
@@ -559,64 +554,96 @@ async function createWidget(items) {
   leftStack.addImage(graphImage);
   leftStack.addSpacer();
 
-  drawContext = new DrawContext();
-  const bedsHeight = 80;
-  const bedsWidth = graphImage.size.width - 30;
-  drawContext.size = new Size(bedsWidth, bedsHeight);
-  drawContext.opaque = false;
+  if (showIcu) {
+    // Get data for icu beds
 
-  let freeBedsWidth = freeBeds / beds * bedsWidth;
-  let covidBedsWidth = cases / beds * bedsWidth;
-  let beatmetBedsWidth = casesBeatmet / beds * bedsWidth;
+    if (debug) {
+      console.log("Getting DIVI info for location: " + diviApiUrl(location));
+    }
 
-  freeBedsWidth = (!freeBedsWidth ? tickWidth / 2 : freeBedsWidth);
-  covidBedsWidth = (!covidBedsWidth ? tickWidth / 2 : covidBedsWidth);
-  beatmetBedsWidth = (!beatmetBedsWidth ? tickWidth / 2 : beatmetBedsWidth);
+    // get data for ICU beds of current location
+    const diviLocationData = await new Request(diviApiUrl(location)).loadJSON();
 
-  // Line representing all beds
-  let bedsLineRect = new Rect(0, bedsHeight / 2 - bedsLineWidth / 2, bedsWidth, bedsLineWidth);
-  drawRoundedRect(drawContext, bedsLineRect, bedsLineColor, 2)
+    if (debug) {
+      console.log(diviLocationData);
+    }
 
-  let bedsRect = new Rect(0, bedsHeight / 2 - 40, bedsWidth - freeBedsWidth - 10, 26);
-  drawContext.setFont(Font.mediumSystemFont(22));
-  drawContext.setTextColor(Color.white());
-  drawContext.drawTextInRect('🛏' + 'Intensivbetten'.toUpperCase() + ': ' + beds, bedsRect)
+    if (!diviLocationData || !diviLocationData.features || !diviLocationData.features.length) {
+      errorText = list.addText('Keine DIVI-Ergebnisse für den aktuellen Ort gefunden.');
+      errorText.textColor = Color.white();
+      console.log(diviLocationData);
+      return list;
+    }
 
-  // Portion representing free beds
-  bedsLineRect = new Rect(bedsWidth - freeBedsWidth, bedsHeight / 2 - bedsLineWidth / 2, freeBedsWidth, bedsLineWidth);
+    const diviAttr = diviLocationData.features[0].attributes;
 
-  drawRoundedRect(drawContext, bedsLineRect, bedsLineFreeColor, 2);
+    // extract data needed
+    const freeBeds = (!diviAttr.betten_frei ? 0 : diviAttr.betten_frei);
+    const beds = (!diviAttr.betten_gesamt ? 0 : diviAttr.betten_gesamt);
+    const usedBeds = (!diviAttr.betten_belegt ? 0 : diviAttr.betten_belegt);
+    const cases = (!diviAttr.faelle_covid_aktuell ? 0 : diviAttr.faelle_covid_aktuell);
+    const casesBeatmet = (!diviAttr.faelle_covid_aktuell_beatmet ? 0 : diviAttr.faelle_covid_aktuell_beatmet);
 
-  drawLine(drawContext, new Point(bedsWidth - freeBedsWidth, bedsHeight / 2 + bedsLineWidth / 2 + 5), new Point(bedsWidth - freeBedsWidth, bedsHeight / 2 - 40), tickWidth, new Color('#4D8802', 1));
-  drawContext.setFont(Font.mediumSystemFont(22));
-  let freeRect = new Rect(0, bedsHeight / 2 - 35, bedsWidth - freeBedsWidth - 10, 22);
-  drawContext.setTextAlignedRight();
-  drawContext.drawTextInRect('frei'.toUpperCase() + ': ' + freeBeds, freeRect)
+    drawContext = new DrawContext();
+    const bedsHeight = 80;
+    const bedsWidth = graphImage.size.width - 30;
+    drawContext.size = new Size(bedsWidth, bedsHeight);
+    drawContext.opaque = false;
 
-  // Portion representing covid patients
-  bedsLineRect = new Rect(0, bedsHeight / 2 - bedsLineWidth / 2, covidBedsWidth, bedsLineWidth);
-  drawRoundedRect(drawContext, bedsLineRect, colorCovidBed, 2);
+    let freeBedsWidth = freeBeds / beds * bedsWidth;
+    let covidBedsWidth = cases / beds * bedsWidth;
+    let beatmetBedsWidth = casesBeatmet / beds * bedsWidth;
 
-  drawLine(drawContext, new Point(covidBedsWidth, bedsHeight / 2 - bedsLineWidth / 2 - 5), new Point(covidBedsWidth, bedsHeight / 2 + 38), tickWidth, colorCovidBed);
+    freeBedsWidth = (!freeBedsWidth ? tickWidth / 2 : freeBedsWidth);
+    covidBedsWidth = (!covidBedsWidth ? tickWidth / 2 : covidBedsWidth);
+    beatmetBedsWidth = (!beatmetBedsWidth ? tickWidth / 2 : beatmetBedsWidth);
 
-  // Portion representing cases beatmet
-  bedsLineRect = new Rect(0, bedsHeight / 2 - bedsLineWidth / 2, beatmetBedsWidth, bedsLineWidth);
-  drawRoundedRect(drawContext, bedsLineRect, colorCovidBedVentilation, 2);
+    // Line representing all beds
+    let bedsLineRect = new Rect(0, bedsHeight / 2 - bedsLineWidth / 2, bedsWidth, bedsLineWidth);
+    drawRoundedRect(drawContext, bedsLineRect, bedsLineColor, 2)
 
-  drawLine(drawContext, new Point(beatmetBedsWidth, bedsHeight / 2 - bedsLineWidth / 2 - 5), new Point(beatmetBedsWidth, bedsHeight / 2 + 20), tickWidth, colorCovidBedVentilation);
+    let bedsRect = new Rect(0, bedsHeight / 2 - 40, bedsWidth - freeBedsWidth - 10, 26);
+    drawContext.setFont(Font.mediumSystemFont(22));
+    drawContext.setTextColor(Color.white());
+    drawContext.drawTextInRect('🛏' + 'Intensivbetten'.toUpperCase() + ': ' + beds, bedsRect)
 
-  let covidRect = new Rect(covidBedsWidth + 10, bedsHeight / 2 + 10, bedsWidth - covidBedsWidth, 22);
+    // Portion representing free beds
+    bedsLineRect = new Rect(bedsWidth - freeBedsWidth, bedsHeight / 2 - bedsLineWidth / 2, freeBedsWidth, bedsLineWidth);
 
-  drawContext.setTextAlignedLeft();
-  if (covidBedsWidth > bedsWidth / 2) {
-    covidRect = new Rect(0, bedsHeight / 2 + 10, covidBedsWidth - 10, 22);
+    drawRoundedRect(drawContext, bedsLineRect, bedsLineFreeColor, 2);
+
+    drawLine(drawContext, new Point(bedsWidth - freeBedsWidth, bedsHeight / 2 + bedsLineWidth / 2 + 5), new Point(bedsWidth - freeBedsWidth, bedsHeight / 2 - 40), tickWidth, new Color('#4D8802', 1));
+    drawContext.setFont(Font.mediumSystemFont(22));
+    let freeRect = new Rect(0, bedsHeight / 2 - 35, bedsWidth - freeBedsWidth - 10, 22);
     drawContext.setTextAlignedRight();
+    drawContext.drawTextInRect('frei'.toUpperCase() + ': ' + freeBeds, freeRect)
 
+    // Portion representing covid patients
+    bedsLineRect = new Rect(0, bedsHeight / 2 - bedsLineWidth / 2, covidBedsWidth, bedsLineWidth);
+    drawRoundedRect(drawContext, bedsLineRect, colorCovidBed, 2);
+
+    drawLine(drawContext, new Point(covidBedsWidth, bedsHeight / 2 - bedsLineWidth / 2 - 5), new Point(covidBedsWidth, bedsHeight / 2 + 38), tickWidth, colorCovidBed);
+
+    // Portion representing cases beatmet
+    bedsLineRect = new Rect(0, bedsHeight / 2 - bedsLineWidth / 2, beatmetBedsWidth, bedsLineWidth);
+    drawRoundedRect(drawContext, bedsLineRect, colorCovidBedVentilation, 2);
+
+    drawLine(drawContext, new Point(beatmetBedsWidth, bedsHeight / 2 - bedsLineWidth / 2 - 5), new Point(beatmetBedsWidth, bedsHeight / 2 + 20), tickWidth, colorCovidBedVentilation);
+
+    let covidRect = new Rect(covidBedsWidth + 10, bedsHeight / 2 + 10, bedsWidth - covidBedsWidth, 22);
+
+    drawContext.setTextAlignedLeft();
+
+    if (covidBedsWidth > bedsWidth / 2) {
+      covidRect = new Rect(0, bedsHeight / 2 + 10, covidBedsWidth - 10, 22);
+      drawContext.setTextAlignedRight();
+
+    }
+
+    drawContext.drawTextInRect('🦠COVID-19: ' + cases + ' (davon ' + casesBeatmet + ' beatmet)', covidRect);
+    leftStack.addImage(drawContext.getImage());
   }
 
-  drawContext.drawTextInRect('🦠COVID-19: ' + cases + ' (davon ' + casesBeatmet + ' beatmet)', covidRect);
-
-  leftStack.addImage(drawContext.getImage());
   return list;
 }
 
