@@ -264,15 +264,20 @@ async function createWidget(items) {
     }
   }
 
-  if (debug) {
-    console.log("Getting data for Germany: " + germanyUrl);
-  }
+  var germanyData = null;
 
-  const germanyData = await new Request(germanyUrl).loadJSON();
+  if (showGermanyValue) {
+    if (debug) {
+      console.log("Getting data for Germany: " + germanyUrl);
+    }
 
-  if (debug) {
-    console.log(germanyData);
+    germanyData = await new Request(germanyUrl).loadJSON();
+
+    if (debug) {
+      console.log(germanyData);
+    }
   }
+  
   if (debug) {
     console.log("Getting info for location: " + apiUrl(location));
   }
