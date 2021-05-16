@@ -3,9 +3,9 @@
 // icon-color: deep-gray; icon-glyph: magic;
 // Licence: Robert Koch-Institut (RKI), dl-de/by-2-0
 // Author: Marcus Raitner (https://fuehrung-erfahren.de)
-// Source: https://gist.github.com/marcusraitner/a1b633625d1016498eaaab712461dfc4
-// Version: 1.0.1
-// Changelog:
+// Source: https://github.com/marcusraitner/COVID-19-Dashboard
+// Version: 1.5.0
+// ## Changelog
 // * 1.0.1: Correction of layout of label for covid-beds
 // * 1.0.2: Bug-Fix for Saar-Pfalz-Kreis (using GEN instead of county for join)
 // * 1.0.3: Bug-Fix for Landsberg a. Lech (now using both GEN and county)
@@ -14,6 +14,7 @@
 // * 1.2.0: New colors and a new step for incidence 165
 // * 1.3.0: New feature: Show also incidence for Germany with "showGermanyValue = true"
 // * 1.4.0: New feature: R-Value for Germany. Bugfix for date of incidence
+// * 1.5.0: Handling of parameters enhanced; see README for full reference
 
 //------------------------------------------------------------------------------
 // General Options Section
