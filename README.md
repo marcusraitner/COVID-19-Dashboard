@@ -4,17 +4,24 @@ Dieses [Scriptable](https://scriptable.app)-Skript erzeugt ein Widget, das den V
 
 ![IMG_0986](https://user-images.githubusercontent.com/65543240/118359626-a0062580-b584-11eb-8c7e-dcb6c6070fe2.jpeg)
 
+## Kontakt und Support
+
+* **Homepage:** https://github.com/marcusraitner/COVID-19-Dashboard
+* **Autor:** [Dr. Marcus Raitner](https://fuehrung-erfahren.de)
+
+Für Ideen und Fehlermeldungen bitte ein [Issue erstellen](https://github.com/marcusraitner/COVID-19-Dashboard/issues).
+
 ## Erläuterung
 
 ### Balkendiagramm
 
-Stellt den Verlauf der 7-Tage-Inzidenz dar. Die Zuordnung zu den Tagen erfolgt entweder logisch richtig (`rki=n`), d.h. am Tag X wird die 7-Tage-Inzidenz der sieben letzten Tage inklusive des Tag X oder so wie das RKI die Zuordnung vornimmt (`rki=y`), d.h. am Tag X wird die 7-Tage-Inzidenz der vergangenen sieben Tage ohne den Tag X angezeigt (vgl. Abschnitt Berechnung).
+Stellt den Verlauf der 7-Tage-Inzidenz dar. Die Zuordnung zu den Tagen erfolgt entweder logisch richtig (`rki=n`), d.h. am Tag X wird die 7-Tage-Inzidenz der sieben letzten Tage inklusive des Tag X oder so wie das RKI die Zuordnung vornimmt (`rki=y`), d.h. am Tag X wird die 7-Tage-Inzidenz der _vergangenen_ sieben Tage _ohne den Tag X_ angezeigt (vgl. Abschnitt Berechnung).
 
 Der hellere Anteil in jedem Balken stellt den Beitrag dieses Tages (bzw. in RKI Logik des vorigen Tages) zur Inzidenz dar.
 
 ### Intensivbetten
 
-Der gesamte Balken repräsentiert alle verfügbaren Betten. Der rechte grüne Anteil sind die freien Betten. Der linke rote Anteil die Betten die mit COVID-19 gemeldet sind. Der dunkelrote Anteil sind die COVID-19 Patienten mit Beatmung.
+Der gesamte Balken repräsentiert _alle_ verfügbaren Betten. Der rechte grüne Anteil sind die _freien_ Betten. Der linke rote Anteil die mit COVID-19 Patienten belegten Betten. Der dunkelrote Anteil sind davon die COVID-19 Patienten mit Beatmung. Der graue Teil des Balkens repräsentiert die mit anderen Patienten belegten Betten.
 
 ### Impfstatus
 
@@ -42,5 +49,8 @@ Das Widget erlaubt folgende Parameter in beliebiger Reihenfolge mit Semikolon ("
 
 ## Berechnung
 
-Mit den Koordinaten des aktuellen Standorts (oder den mit `loc=` übergebenen Koordinaten) wird der aktuelle Landkreis ermittelt und dann zu diesem die Tagessummen und wenn nötig die Daten des Intensivregisters und der Impfstatus ermittelt. Aus den Tagesummen wird dann die 7-Tages-Inzidenz wie folgt berechnet: Inzidenz am Tag X = Summe (Tagessumme Tag X, Tagessumme Tag X-1, … Tagessumme Tag X - 6) / Einwohnerzahl.
-Das RKI ordnet in ihrem offiziellen [Excel](https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Fallzahlen_Kum_Tab.html) den Inzidenzwert allerdings nicht dem aktuellsten Tag der Summe zu (Tag X) sondern dem nächsten (Tag X + 1). Dieses Verhalten kann mit dem Paramter `rki=y`konfiguriert werden.
+Mit den Koordinaten des aktuellen Standorts (oder den mit `loc=` übergebenen Koordinaten) wird der aktuelle Landkreis ermittelt und dann zu diesem die Tagessummen und wenn nötig die Daten des Intensivregisters und der Impfstatus ermittelt. 
+
+Aus den Tagesummen wird dann die 7-Tages-Inzidenz wie folgt berechnet: Inzidenz am Tag X = Summe (Tagessumme Tag X, Tagessumme Tag X-1, … Tagessumme Tag X - 6) / Einwohnerzahl. 
+
+Das RKI ordnet in ihrem offiziellen [Excel](https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Fallzahlen_Kum_Tab.html) den Inzidenzwert allerdings nicht dem aktuellsten Tag der Summe zu (Tag X) sondern dem nächsten (Tag X + 1). Falls gewünscht, kann dieses Verhalten  mit dem Paramter `rki=y`konfiguriert werden.
