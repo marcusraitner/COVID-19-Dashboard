@@ -40,6 +40,12 @@ var showVaccination = true;
 // Toggle showing of ICU beds
 var showIcu = true;
 
+// use rki calculation scheme
+var rki = false;
+
+// show daily portion of incidence
+var showDaily = true;
+
 // palette found here: https://coolors.co/03071e-370617-6a040f-9d0208-d00000-dc2f02-e85d04-f48c06-faa307-ffba08
 const incidenceColors = [{
     lower: 0,
@@ -218,6 +224,18 @@ async function createWidget(items) {
           showIcu = true;
         } else {
           showIcu = false;
+        }
+      } else if (p[0].trim().toLowerCase() == "rki") {
+        if (p[1].trim().toLowerCase() == "y") {
+          rki = true;
+        } else {
+          rki = false;
+        }
+      } else if (p[0].trim().toLowerCase() == "daily") {
+        if (p[1].trim().toLowerCase() == "y") {
+          showDaily = true;
+        } else {
+          showDaily = false;
         }
       } else if (p.length == 1) {
         // for compatability with old syntax
@@ -459,7 +477,9 @@ async function createWidget(items) {
 
   for (let i = 0; i < countyData.features.length; i++) {
     let date = new Date(countyData.features[i].attributes.Meldedatum);
-    date.setDate(date.getDate() + 1);
+    if (rki) {
+      date.setDate(date.getDate() + 1);
+    }
     const day = date.getDate();
     const dayOfWeek = date.getDay();
     const cases = countyData.features[i].attributes.AnzahlFall;
@@ -540,10 +560,12 @@ async function createWidget(items) {
     let rect = new Rect(spaceBetweenDays * i, graphBottom - (barHeight * delta), vertLineWeight, barHeight * delta);
     drawRoundedRect(graphDrawContext, rect, drawColor, 4);
 
-    const dailyDelta = (dailyValues[i] - min) / diff;
-    rect = new Rect(spaceBetweenDays * i, graphBottom - (barHeight * dailyDelta), vertLineWeight, barHeight * dailyDelta);
+    if (showDaily) {
+      const dailyDelta = (dailyValues[i] - min) / diff;
+      rect = new Rect(spaceBetweenDays * i, graphBottom - (barHeight * dailyDelta), vertLineWeight, barHeight * dailyDelta);
 
-    drawRoundedRect(graphDrawContext, rect, new Color("#FFFFFF", .4), 4);
+      drawRoundedRect(graphDrawContext, rect, new Color("#FFFFFF", .4), 4);
+    }
 
     drawTextR(graphDrawContext, cases, casesRect, dayColor, Font.mediumSystemFont(21));
     drawTextR(graphDrawContext, day, dayRect, dayColor, Font.mediumSystemFont(21));

@@ -4,16 +4,33 @@ Dieses [Scriptable](https://scriptable.app)-Skript erzeugt ein Widget, das den V
 
 ![IMG_0986](https://user-images.githubusercontent.com/65543240/118359626-a0062580-b584-11eb-8c7e-dcb6c6070fe2.jpeg)
 
+## Erläuterung
+
+### Balkendiagramm
+
+Stellt den Verlauf der 7-Tage-Inzidenz dar. Die Zuordnung zu den Tagen erfolgt entweder logisch richtig (`rki=n`), d.h. am Tag X wird die 7-Tage-Inzidenz der sieben letzten Tage inklusive des Tag X oder so wie das RKI die Zuordnung vornimmt (`rki=y`), d.h. am Tag X wird die 7-Tage-Inzidenz der vergangenen sieben Tage ohne den Tag X angezeigt (vgl. Abschnitt Berechnung).
+
+Der hellere Anteil in jedem Balken stellt den Beitrag dieses Tages (bzw. in RKI Logik des vorigen Tages) zur Inzidenz dar.
+
+### Intensivbetten
+
+Der gesamte Balken repräsentiert alle verfügbaren Betten. Der rechte grüne Anteil sind die freien Betten. Der linke rote Anteil die Betten die mit COVID-19 gemeldet sind. Der dunkelrote Anteil sind die COVID-19 Patienten mit Beatmung.
+
+### Impfstatus
+
+Beim Impfstatus werden zwei Werte angezeigt (für das Bundesland; auf Landkreisebene gibt es die Daten nicht): Der Anteil der einmalig geimpften und der Anteil der zweimalig geimpften Personen.
+
 ## Parameter
 
-Das Widget erlaubt folgende Parameter in beliebiger Reihenfolge mit Semikolon (";") getrennt, also z.B. `loc=48.34,10.78;de=y;rval=y;vac=n;beds=y`
+Das Widget erlaubt folgende Parameter in beliebiger Reihenfolge mit Semikolon (";") getrennt, also z.B. `loc=48.34,10.78;de=y;rval=y;vac=n;daily=y;beds=y;rki=n`
 
-* `loc=<latitude,longitude>`: z.B. `loc=48.34,10.78` (aus Gründen der Kompatibilität kann "loc=" auch entfallen.
-* `de=(y|n)`: bestimmt, ob die Inzidenz für Deutschland angezeigt werden soll (y) oder nicht (n)
-* `rval=(y|n)`: bestimmt, ob bei der Inzidenz für Deutschland auch der R-Wert angezeigt werden soll (y) oder nicht (n)
-* `vac=(y|n)`: bestimmt, ob der aktuelle Impfstatus für den ausgewählten Landkreis angezeigt werden soll (y) oder nicht (n)
-* `beds=(y|n)`: bestimmt, ob die aktuelle Auslastung der Intensivbetten angezeigt werden soll (y) oder nicht (n)
-* `rki=(y|n)`: bestimmt, ob die 7-Tages-Inzidenz dem jeweils aktuellsten Tag der zugrundeliegenden Summe zugeordnet werden (n) oder wie beim Excel des RKI dem jeweils nächsten Tag.
+* `loc=<latitude,longitude>`: z.B. `loc=48.34,10.78` (aus Gründen der Kompatibilität kann "loc=" auch entfallen. Default: aktueller Ort.
+* `de=(y|n)`: bestimmt, ob die Inzidenz für Deutschland angezeigt werden soll (y) oder nicht (n). Default: `de=n`
+* `rval=(y|n)`: bestimmt, ob bei der Inzidenz für Deutschland auch der R-Wert angezeigt werden soll (y) oder nicht (n). Default: `rval=y`
+* `vac=(y|n)`: bestimmt, ob der aktuelle Impfstatus für den ausgewählten Landkreis angezeigt werden soll (y) oder nicht (n). Default: `vac=y`
+* `beds=(y|n)`: bestimmt, ob die aktuelle Auslastung der Intensivbetten angezeigt werden soll (y) oder nicht (n). Default: `beds=y`
+* `rki=(y|n)`: bestimmt, ob die 7-Tages-Inzidenz dem jeweils aktuellsten Tag der zugrundeliegenden Summe zugeordnet werden (n) oder wie beim Excel des RKI dem jeweils nächsten Tag. Default: `rki=n.`
+* `daily=(y|n)`: bestimmt, ob der Beitrag des Tages zur 7-Tages-Inzidenz angezeigt werden soll. Default: `daily=y`
 
 ## Datenquellen
 
@@ -25,5 +42,5 @@ Das Widget erlaubt folgende Parameter in beliebiger Reihenfolge mit Semikolon ("
 
 ## Berechnung
 
-Mit den Koordinaten des aktuellen Standorts (oder den mit `loc=` übergebenen Koordinaten) wird der aktuelle Landkreis ermittelt und dann zu diesem die Tagessummen und wenn nötig die Daten des Intensivregisters und der Impfstatus ermittelt. Aus den Tagesummen wird dann die 7-Tages-Inzidenz wie folgt berechnet: Inzidenz am Tag X = Summe (Tagessumme Tag X, Tagessumme Tag X-1, … Tagessumme Tag X - 6) / Einwohnerzahl. 
+Mit den Koordinaten des aktuellen Standorts (oder den mit `loc=` übergebenen Koordinaten) wird der aktuelle Landkreis ermittelt und dann zu diesem die Tagessummen und wenn nötig die Daten des Intensivregisters und der Impfstatus ermittelt. Aus den Tagesummen wird dann die 7-Tages-Inzidenz wie folgt berechnet: Inzidenz am Tag X = Summe (Tagessumme Tag X, Tagessumme Tag X-1, … Tagessumme Tag X - 6) / Einwohnerzahl.
 Das RKI ordnet in ihrem offiziellen [Excel](https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Fallzahlen_Kum_Tab.html) den Inzidenzwert allerdings nicht dem aktuellsten Tag der Summe zu (Tag X) sondern dem nächsten (Tag X + 1). Dieses Verhalten kann mit dem Paramter `rki=y`konfiguriert werden.
