@@ -663,7 +663,7 @@ async function createWidget(items) {
 
     }
 
-    drawContext.drawTextInRect('🦠C19: ' + cases + ' (dav. ' + casesBeatmet + ' beatmet)', covidRect);
+    drawContext.drawTextInRect('🦠C19: ' + cases + ' (davon ' + casesBeatmet + ' beatmet)', covidRect);
     leftStack.addImage(drawContext.getImage());
   }
 
