@@ -1,7 +1,7 @@
 // Variables used by Scriptable.
 // These must be at the very top of the file. Do not edit.
 // icon-color: deep-gray; icon-glyph: magic;
-// Licence: Robert Koch-Institut (RKI), dl-de/by-2-0
+// Licence: GNU GENERAL PUBLIC LICENSE, Version 3, 29 June 2007
 // Author: Marcus Raitner (https://fuehrung-erfahren.de)
 // Source: https://github.com/marcusraitner/COVID-19-Dashboard
 // Version: 1.5.0
@@ -277,7 +277,7 @@ async function createWidget(items) {
       console.log(germanyData);
     }
   }
-  
+
   if (debug) {
     console.log("Getting info for location: " + apiUrl(location));
   }
@@ -373,7 +373,7 @@ async function createWidget(items) {
   let incidenceText = leftStack.addText('🦠 7-Tage-Inzidenz'.toUpperCase() + ' – ' + county);
   incidenceText.font = Font.semiboldRoundedSystemFont(11);
   incidenceText.textColor = Color.white();
-  leftStack.addSpacer(); // FIXME: only when icu beds are shown.
+  leftStack.addSpacer();
 
   if (showVaccination) {
     if (debug) {
@@ -644,6 +644,12 @@ async function createWidget(items) {
     drawContext.setFont(Font.mediumSystemFont(22));
     let freeRect = new Rect(0, bedsHeight / 2 - 35, bedsWidth - freeBedsWidth - 10, 22);
     drawContext.setTextAlignedRight();
+
+    if (freeBedsWidth > bedsWidth / 2) {
+      freeRect = new Rect(bedsWidth - freeBedsWidth + 10, bedsHeight / 2 - 35, freeBedsWidth - 10, 22);
+      drawContext.setTextAlignedLeft();
+    }
+
     drawContext.drawTextInRect('frei'.toUpperCase() + ': ' + freeBeds, freeRect)
 
     // Portion representing covid patients
@@ -658,14 +664,13 @@ async function createWidget(items) {
 
     drawLine(drawContext, new Point(beatmetBedsWidth, bedsHeight / 2 - bedsLineWidth / 2 - 5), new Point(beatmetBedsWidth, bedsHeight / 2 + 20), tickWidth, colorCovidBedVentilation);
 
-    let covidRect = new Rect(covidBedsWidth + 10, bedsHeight / 2 + 10, bedsWidth - covidBedsWidth, 22);
+    let covidRect = new Rect(covidBedsWidth + 10, bedsHeight / 2 + 10, bedsWidth - covidBedsWidth - 10, 22);
 
     drawContext.setTextAlignedLeft();
 
     if (covidBedsWidth > bedsWidth / 2) {
       covidRect = new Rect(0, bedsHeight / 2 + 10, covidBedsWidth - 10, 22);
       drawContext.setTextAlignedRight();
-
     }
 
     drawContext.drawTextInRect('🦠C19: ' + cases + ' (davon ' + casesBeatmet + ' beatmet)', covidRect);
