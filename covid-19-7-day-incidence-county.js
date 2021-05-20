@@ -47,6 +47,9 @@ var rki = false;
 // show daily portion of incidence
 var showDaily = true;
 
+// Show frozen value for incidence instead of calculating it.
+var useFrozen = false;
+
 // palette found here: https://coolors.co/03071e-370617-6a040f-9d0208-d00000-dc2f02-e85d04-f48c06-faa307-ffba08
 const incidenceColors = [{
     lower: 0,
@@ -130,6 +133,10 @@ const diviApiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/
 const vaccUrl = `https://api.corona-zahlen.org/vaccinations`;
 
 const germanyUrl = `https://api.corona-zahlen.org/germany`;
+
+const apiUrlDistricts = `https://api.corona-zahlen.org/districts/`;
+
+const apiUrlDataFrozen = (ags, days) => `https://api.corona-zahlen.org/districts/${ encodeURIComponent( ags ) }/history/frozen-incidence/${ encodeURIComponent( days ) }`;
 
 const stateToAbbr = {
   'Baden-Württemberg': 'BW',
@@ -238,6 +245,12 @@ async function createWidget(items) {
         } else {
           showDaily = false;
         }
+      } else if (p[0].trim().toLowerCase() == "frozen") {
+        if (p[1].trim().toLowerCase() == "y") {
+          useFrozen = true;
+        } else {
+          useFrozen = false;
+        }
       } else if (p.length == 1) {
         // for compatability with old syntax
         const fixedCoordinates = p[0].split(',').map(parseFloat);
@@ -304,63 +317,105 @@ async function createWidget(items) {
   const ewzBL = attr.EWZ_BL
   const county = attr.county; // Landkreis
   const gen = attr.GEN;
-  const ags = attr.AGS;
+  var ags = attr.AGS;
   const bundesLand = stateToAbbr[attr.BL];
   const bl = attr.BL;
   const incidenceBl = Math.round(attr.cases7_bl_per_100k);
 
   // get data for the last days
-  const date = new Date();
-
+  var days;
   if (showGermanyValue) {
-    date.setTime(date.getTime() - 19 * DAY_IN_MICROSECONDS);
+    days = 19;
   } else {
-    date.setTime(date.getTime() - 20 * DAY_IN_MICROSECONDS);
+    days = 20;
   }
 
+  const date = new Date();
+  date.setTime(date.getTime() - days * DAY_IN_MICROSECONDS);
   const minDate = ('0' + (date.getMonth() + 1)).slice(-2) + '-' + ('0' + date.getDate()).slice(-2) + '-' + date.getFullYear();
 
   let countyData;
 
-  if (ags) {
-    if (debug) {
-      console.log("Getting data for ags: " + apiUrlData2(ags, minDate));
+  if (useFrozen) {
+    if (!ags) {
+      if (debug) {
+        console.log("ags not set,looking it up with: " + apiUrlDistricts);
+      }
+
+      const districts = await new Request(apiUrlDistricts).loadJSON();
+
+      if (debug) {
+        console.log(districts);
+      }
+
+      for (var district in districts.data) {
+        if (districts.data[district].county == county) {
+          ags = districts.data[district].ags;
+          if (debug) {
+            console.log("Found ags: " + ags);
+          }
+          break;
+        }
+      }
     }
 
-    countyData = await new Request(apiUrlData2(ags, minDate)).loadJSON();
+    if (debug) {
+      console.log("Getting frozen data for ags: " + apiUrlDataFrozen(ags, days));
+    }
+
+    countyData = await new Request(apiUrlDataFrozen(ags, days - 7)).loadJSON();
 
     if (debug) {
       console.log(countyData);
+    }
+
+    if (!countyData || !countyData.data || !countyData.data[ags].history || !countyData.data[ags].history.length) {
+      list.addText('Keine Statistik gefunden.');
+      return list;
     }
 
   } else {
-    if (debug) {
-      console.log("Getting data for county: " + apiUrlData(gen, minDate));
-    }
-
-    countyData = await new Request(apiUrlData(gen, minDate)).loadJSON();
-
-    if (debug) {
-      console.log(countyData);
-    }
-
-    if (!countyData || !countyData.features || !countyData.features.length) {
-
+    if (ags) {
       if (debug) {
-        console.log("Getting data for county: " + apiUrlData(county, minDate));
+        console.log("Getting data for ags: " + apiUrlData2(ags, minDate));
       }
 
-      countyData = await new Request(apiUrlData(county, minDate)).loadJSON();
+      countyData = await new Request(apiUrlData2(ags, minDate)).loadJSON();
 
       if (debug) {
         console.log(countyData);
       }
-    }
-  }
 
-  if (!countyData || !countyData.features || !countyData.features.length) {
-    list.addText('Keine Statistik gefunden.');
-    return list;
+    } else {
+      if (debug) {
+        console.log("Getting data for county: " + apiUrlData(gen, minDate));
+      }
+
+      countyData = await new Request(apiUrlData(gen, minDate)).loadJSON();
+
+      if (debug) {
+        console.log(countyData);
+      }
+
+      if (!countyData || !countyData.features || !countyData.features.length) {
+
+        if (debug) {
+          console.log("Getting data for county: " + apiUrlData(county, minDate));
+        }
+
+        countyData = await new Request(apiUrlData(county, minDate)).loadJSON();
+
+        if (debug) {
+          console.log(countyData);
+        }
+      }
+    }
+
+    if (!countyData || !countyData.features || !countyData.features.length) {
+      list.addText('Keine Statistik gefunden.');
+      return list;
+    }
+
   }
 
   let stack = list.addStack();
@@ -437,26 +492,32 @@ async function createWidget(items) {
   let min, max, diff;
 
   let dailyValues = new Array();
+  let history = new Array();
 
-  for (let i = countyData.features.length - 1; i >= 6; i--) {
-    dailyValues[i] = countyData.features[i].attributes.AnzahlFall / ewz;
+  if (useFrozen) {
+    history = countyData.data[ags].history;
+  } else {
+    for (let i = countyData.features.length - 1; i >= 6; i--) {
+      dailyValues[i - 6] = countyData.features[i].attributes.AnzahlFall / ewz;
 
-    let sum = 0;
+      let sum = 0;
 
-    for (let j = 0; j < 7; j++) {
-      sum += countyData.features[i - j].attributes.AnzahlFall;
+      for (let j = 0; j < 7; j++) {
+        sum += countyData.features[i - j].attributes.AnzahlFall;
+      }
+
+      sum /= ewz;
+
+      history[i - 6] = {
+        weekIncidence: Math.round(sum),
+        date: countyData.features[i].attributes.Meldedatum
+      };
     }
-
-    sum /= ewz;
-    countyData.features[i].attributes.AnzahlFall = Math.round(sum);
   }
 
-  countyData.features.splice(0, 6);
-  dailyValues.splice(0, 6);
-
-  for (let i = 0; i < countyData.features.length; i++) {
-    let aux = countyData.features[i].attributes.AnzahlFall;
-
+  for (let i = 0; i < history.length; i++) {
+    history[i].weekIncidence = Math.round(history[i].weekIncidence);
+    let aux = history[i].weekIncidence;
     max = (aux > max || max == undefined ? aux : max);
   }
 
@@ -481,14 +542,14 @@ async function createWidget(items) {
   const graphBottom = graphHeight - 23;
   const barHeight = graphBottom - graphTop;
 
-  for (let i = 0; i < countyData.features.length; i++) {
-    let date = new Date(countyData.features[i].attributes.Meldedatum);
-    if (rki) {
+  for (let i = 0; i < history.length; i++) {
+    let date = new Date(history[i].date);
+    if (rki && !useFrozen) {
       date.setDate(date.getDate() + 1);
     }
     const day = date.getDate();
     const dayOfWeek = date.getDay();
-    const cases = countyData.features[i].attributes.AnzahlFall;
+    const cases = history[i].weekIncidence;
     const delta = (cases - min) / diff;
 
     let drawColor;
@@ -504,7 +565,7 @@ async function createWidget(items) {
       dayColor = Color.white();
     }
 
-    if (i == countyData.features.length - 1) {
+    if (i == history.length - 1) {
       if (showGermanyValue) {
         const delta = (germanyData.weekIncidence - min) / diff;
         const y = graphBottom - (barHeight * delta);
@@ -566,7 +627,7 @@ async function createWidget(items) {
     let rect = new Rect(spaceBetweenDays * i, graphBottom - (barHeight * delta), vertLineWeight, barHeight * delta);
     drawRoundedRect(graphDrawContext, rect, drawColor, 4);
 
-    if (showDaily) {
+    if (showDaily && !useFrozen) {
       const dailyDelta = (dailyValues[i] - min) / diff;
       rect = new Rect(spaceBetweenDays * i, graphBottom - (barHeight * dailyDelta), vertLineWeight, barHeight * dailyDelta);
 
