@@ -51,6 +51,7 @@ Das Widget erlaubt folgende Parameter in beliebiger Reihenfolge mit Semikolon ("
 * **RKI Intensivregister:** Daten zu den Intensivbetten des Landkreises ([Quelle](https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/DIVI_Intensivregister_Landkreise/FeatureServer))
 * **Impfstatus:** Daten des RKI via https://api.corona-zahlen.org/
 * **Deutschland:** Daten des RKI via https://api.corona-zahlen.org/
+* **"Frozen"-Werte:** Daten des RKI via https://api.corona-zahlen.org/
 
 ## Berechnung
 
