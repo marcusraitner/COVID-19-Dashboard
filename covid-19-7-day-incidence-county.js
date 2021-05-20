@@ -158,6 +158,25 @@ const stateToAbbr = {
   'Thüringen': 'TH'
 };
 
+const rulesUrl = {
+  'Baden-Württemberg': 'https://www.baden-wuerttemberg.de/de/service/aktuelle-infos-zu-corona/',
+  'Bayern': 'https://www.bayern.de/coronavirus-in-bayern-informationen-auf-einen-blick/',
+  'Berlin': 'https://www.berlin.de/corona/',
+  'Brandenburg': 'https://kkm.brandenburg.de/kkm/de/',
+  'Bremen': 'https://www.bremen.de/corona',
+  'Hamburg': 'https://www.hamburg.de/coronavirus/',
+  'Hessen': 'https://www.hessen.de/fuer-buerger/aktuelle-informationen-zu-corona-hessen',
+  'Mecklenburg-Vorpommern': 'https://www.regierung-mv.de/corona/',
+  'Niedersachsen': 'https://www.niedersachsen.de/Coronavirus',
+  'Nordrhein-Westfalen': 'https://www.land.nrw/corona',
+  'Rheinland-Pfalz': 'https://corona.rlp.de/de/startseite/',
+  'Saarland': 'https://corona.saarland.de/DE/home/home_node.html',
+  'Sachsen': 'https://www.coronavirus.sachsen.de/index.html',
+  'Sachsen-Anhalt': 'https://coronavirus.sachsen-anhalt.de/',
+  'Schleswig-Holstein': 'https://www.schleswig-holstein.de/DE/Schwerpunkte/Coronavirus/coronavirus_node.html;jsessionid=8651006488D177B24833E4A56502FC06.delivery1-master',
+  'Thüringen': 'https://corona.thueringen.de/'
+};
+
 let widget = await createWidget();
 await widget.presentMedium();
 
@@ -426,9 +445,20 @@ async function createWidget(items) {
   let leftStack = stack.addStack();
   leftStack.layoutVertically();
 
-  let incidenceText = leftStack.addText('🦠 7-Tage-Inzidenz'.toUpperCase() + ' – ' + county);
+  let textStack = leftStack.addStack();
+  textStack.layoutHorizontally()
+  textStack.setPadding(0, 0, 0, 0);
+
+  let incidenceText = textStack.addText('🦠 7-Tage-Inzidenz'.toUpperCase() + ' – ' + county);
   incidenceText.font = Font.semiboldRoundedSystemFont(11);
   incidenceText.textColor = Color.white();
+
+  textStack.addSpacer();
+
+  let rulesText = textStack.addText('🚧');
+  rulesText.font = Font.mediumSystemFont(11);
+  rulesText.url = rulesUrl[attr.BL];
+
   leftStack.addSpacer();
 
   if (showVaccination) {
