@@ -2,7 +2,7 @@
 
 Dieses [Scriptable](https://scriptable.app)-Skript erzeugt ein Widget, das den Verlauf der 7-Tage-Inzidenz und die Auslastung der Intensivbetten am aktuellen Standort innerhalb Deutschlands anzeigt. Zusätzlich angezeigt wird der aktuelle Wert der 7-Tage-Inzidenz des zugehörigen Bundeslandes und der Impfstatus des Bundeslandes. Hier ein Beispiel für den Landkreis Ebersberg:
 
-![IMG_0986](https://user-images.githubusercontent.com/65543240/118359626-a0062580-b584-11eb-8c7e-dcb6c6070fe2.jpeg)
+![IMG_1027](https://user-images.githubusercontent.com/65543240/119034702-ec030100-b9ae-11eb-9e88-d9c031c2b869.jpeg)
 
 ## Kontakt und Support
 
@@ -26,6 +26,10 @@ Der gesamte Balken repräsentiert _alle_ verfügbaren Betten. Der rechte grüne 
 ### Impfstatus
 
 Beim Impfstatus werden zwei Werte angezeigt (für das Bundesland; auf Landkreisebene gibt es die Daten nicht): Der Anteil der einmalig geimpften und der Anteil der zweimalig geimpften Personen.
+
+## Links zu Coronaregeln
+
+Hinter dem Symbol 🚧 befindet sich ein Link zu den Coronaregeln des jeweiligen Bundeslandes (Quelle der Links: [Übersichtsseite der Bundesregierung](https://www.bundesregierung.de/breg-de/themen/coronavirus/corona-bundeslaender-1745198))
 
 ## Parameter
 
