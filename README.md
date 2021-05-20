@@ -27,7 +27,7 @@ Der gesamte Balken repräsentiert _alle_ verfügbaren Betten. Der rechte grüne 
 
 Beim Impfstatus werden zwei Werte angezeigt (für das Bundesland; auf Landkreisebene gibt es die Daten nicht): Der Anteil der einmalig geimpften und der Anteil der zweimalig geimpften Personen.
 
-## Links zu Coronaregeln
+### Links zu Coronaregeln
 
 Hinter dem Symbol 🚧 befindet sich ein Link zu den Coronaregeln des jeweiligen Bundeslandes (Quelle der Links: [Übersichtsseite der Bundesregierung](https://www.bundesregierung.de/breg-de/themen/coronavirus/corona-bundeslaender-1745198))
 
