@@ -4,7 +4,7 @@
 // Licence: GNU GENERAL PUBLIC LICENSE, Version 3, 29 June 2007
 // Author: Marcus Raitner (https://fuehrung-erfahren.de)
 // Source: https://github.com/marcusraitner/COVID-19-Dashboard
-// Version: 1.5.0
+// Version: 1.6.0
 // ## Changelog
 // * 1.0.1: Correction of layout of label for covid-beds
 // * 1.0.2: Bug-Fix for Saar-Pfalz-Kreis (using GEN instead of county for join)
@@ -15,6 +15,7 @@
 // * 1.3.0: New feature: Show also incidence for Germany with "showGermanyValue = true"
 // * 1.4.0: New feature: R-Value for Germany. Bugfix for date of incidence
 // * 1.5.0: Handling of parameters enhanced; see README for full reference
+// * 1.6.0: New feature: Use frozen values of RKI
 
 //------------------------------------------------------------------------------
 // General Options Section
