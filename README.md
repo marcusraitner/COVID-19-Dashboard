@@ -13,6 +13,8 @@ Derzeit gibt es das Widget nur in diesem mittelgroßen Format.
 
 Für Ideen und Fehlermeldungen bitte ein [Issue erstellen](https://github.com/marcusraitner/COVID-19-Dashboard/issues).
 
+☕️ Einen Kaffee ausgeben: https://ko-fi.com/marcusraitner
+
 ## Erläuterung
 
 ### Balkendiagramm
