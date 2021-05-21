@@ -340,7 +340,7 @@ async function createWidget(items) {
   var ags = attr.AGS;
   const bundesLand = stateToAbbr[attr.BL];
   const bl = attr.BL;
-  const incidenceBl = Math.round(attr.cases7_bl_per_100k);
+  const incidenceBl = Math.floor(attr.cases7_bl_per_100k);
 
   // get data for the last days
   var days;
@@ -540,14 +540,14 @@ async function createWidget(items) {
       sum /= ewz;
 
       history[i - 6] = {
-        weekIncidence: Math.round(sum),
+        weekIncidence: Math.floor(sum),
         date: countyData.features[i].attributes.Meldedatum
       };
     }
   }
 
   for (let i = 0; i < history.length; i++) {
-    history[i].weekIncidence = Math.round(history[i].weekIncidence);
+    history[i].weekIncidence = Math.floor(history[i].weekIncidence);
     let aux = history[i].weekIncidence;
     max = (aux > max || max == undefined ? aux : max);
   }
@@ -619,7 +619,7 @@ async function createWidget(items) {
         const bundesLandRect = new Rect(x, y + 3, width, 23);
         drawTextR(graphDrawContext, "DE", bundesLandRect, dayColor, Font.mediumSystemFont(21));
         const bundesLandIncidenceRect = new Rect(x, y - 28, width, 23);
-        drawTextR(graphDrawContext, Math.round(germanyData.weekIncidence), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(21));
+        drawTextR(graphDrawContext, Math.floor(germanyData.weekIncidence), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(21));
 
         if (showRValue) {
           let rRect = new Rect(x, graphBottom - 28, width, 23);
