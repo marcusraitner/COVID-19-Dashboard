@@ -45,6 +45,7 @@ Das Widget erlaubt folgende Parameter in beliebiger Reihenfolge mit Semikolon ("
 * `rki=(y|n)`: bestimmt, ob die 7-Tages-Inzidenz dem jeweils aktuellsten Tag der zugrundeliegenden Summe zugeordnet werden (n) oder wie beim Excel des RKI dem jeweils nächsten Tag. Default: `rki=n.`
 * `daily=(y|n)`: bestimmt, ob der Beitrag des Tages zur 7-Tages-Inzidenz angezeigt werden soll. Default: `daily=y`
 * `frozen=(y|n)`: bestimmt, ob die "eingefrorenen" Werte des RKI verwendet werden sollen (s. Berechnung). Default: `frozen=n`
+* `decimal=(y|n)`: Legt fest, ob die Inzidenzwerte mit einer Dezimalstelle angezeigt werden soll. Default: `decimal=n`, d.h. die Werte werden _abgerundet_ auf ganze Zahlen, weil damit dann am besten das Unterschreiten der Schwellwerte dargestellt wird.
 
 ## Datenquellen
 
@@ -61,7 +62,7 @@ Mit den Koordinaten des aktuellen Standorts (oder den mit `loc=` übergebenen Ko
 
 Aus den Tagesummen wird dann die 7-Tages-Inzidenz wie folgt berechnet: Inzidenz am Tag X = Summe (Tagessumme Tag X, Tagessumme Tag X-1, … Tagessumme Tag X - 6) / Einwohnerzahl.
 
-Die Inzidenzwerte werden grundsätzlich _abgerundet_, weil es bezüglich der Maßnahmen nur auf die Unterschreitung von Schwellwerten ankommt.
+Die Inzidenzwerte werden standardmäßig _abgerundet_, weil es bezüglich der Maßnahmen auf die Unterschreitung von Schwellwerten ankommt. Wer will kann sich zusätzlich die erste Nachkommastelle anzeigen lassen mit der Option `decimal=y` (dann werden aber drei Tage in der Historie weniger angezeigt).
 
 Das RKI ordnet in ihrem offiziellen [Excel](https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Fallzahlen_Kum_Tab.html) den Inzidenzwert allerdings nicht dem aktuellsten Tag der Summe zu (Tag X) sondern dem nächsten (Tag X + 1). Falls gewünscht, kann dieses Verhalten  mit dem Paramter `rki=y`konfiguriert werden. Rein logisch kann es den Inzidenzwert von heute aber erst morgen geben und daher ist diese Einstellung der Default.
 

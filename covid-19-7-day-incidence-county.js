@@ -31,7 +31,7 @@ const imageBackground = false;
 const forceImageUpdate = false;
 
 // Show also the incidence for Germany in total
-var showGermanyValue = false;
+var showGermanyValue = true;
 
 // Show also the R-Value (only if showGermanyValue == true)
 var showRValue = true;
@@ -50,6 +50,9 @@ var showDaily = true;
 
 // Show frozen value for incidence instead of calculating it.
 var useFrozen = false;
+
+// Show one decimal place
+var showDecimal = true;
 
 // palette found here: https://coolors.co/03071e-370617-6a040f-9d0208-d00000-dc2f02-e85d04-f48c06-faa307-ffba08
 const incidenceColors = [{
@@ -116,11 +119,11 @@ const widgetHeight = 338;
 const widgetWidth = 720;
 const graphLow = 0;
 const graphHeight = 170;
-const spaceBetweenDays = 50;
 const bedsLineWidth = 12;
-const vertLineWeight = 45;
 const tickWidth = 4;
-const vaccinationWidth = 90;
+const vaccinationWidth = 65;
+var spaceBetweenDays = 50;
+var vertLineWeight = 45;
 
 // APIs
 const apiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_Landkreisdaten/FeatureServer/0/query?where=1%3D1&outFields=GEN,AGS,EWZ,EWZ_BL,cases,death_rate,deaths,cases7_per_100k,cases7_bl_per_100k,BL,county&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
@@ -271,6 +274,12 @@ async function createWidget(items) {
         } else {
           useFrozen = false;
         }
+      } else if (p[0].trim().toLowerCase() == "decimal") {
+        if (p[1].trim().toLowerCase() == "y") {
+          showDecimal = true;
+        } else {
+          showDecimal = false;
+        }
       } else if (p.length == 1) {
         // for compatability with old syntax
         const fixedCoordinates = p[0].split(',').map(parseFloat);
@@ -340,14 +349,24 @@ async function createWidget(items) {
   var ags = attr.AGS;
   const bundesLand = stateToAbbr[attr.BL];
   const bl = attr.BL;
-  const incidenceBl = Math.floor(attr.cases7_bl_per_100k);
+  const incidenceBl = (showDecimal ? Math.round(attr.cases7_bl_per_100k * 10) / 10 : Math.floor(attr.cases7_bl_per_100k));
+
+  // Adjust width of bars for a decimal place
+  if (showDecimal) {
+    spaceBetweenDays += 13;
+    vertLineWeight += 13;
+  }
 
   // get data for the last days
-  var days;
+  var days = 20;
+
   if (showGermanyValue) {
-    days = 19;
-  } else {
-    days = 20;
+    days -= 1;
+  }
+
+  // Adjust number of days for showing decimal
+  if (showDecimal) {
+    days -= 3;
   }
 
   const date = new Date();
@@ -477,8 +496,8 @@ async function createWidget(items) {
       return list;
     }
 
-    let quoteInitial = Math.round(vaccData.data.states[bundesLand].quote * 1000) / 10;
-    let quoteBooster = Math.round(vaccData.data.states[bundesLand].secondVaccination.quote * 1000) / 10;
+    let quoteInitial = Math.round(vaccData.data.states[bundesLand].quote * 100);
+    let quoteBooster = Math.round(vaccData.data.states[bundesLand].secondVaccination.quote * 100);
 
     leftStack.setPadding(7, 7, 7, 0);
     stack.addSpacer(10);
@@ -497,8 +516,8 @@ async function createWidget(items) {
     drawContext.size = new Size(vaccinationWidth, vaccinationHeight);
     drawContext.opaque = false;
 
-    let vaccinationTextRect = new Rect(15, 10, vaccinationWidth - 10, 55);
-    drawTextR(drawContext, '💉', vaccinationTextRect, Color.white(), Font.mediumSystemFont(50));
+    let vaccinationTextRect = new Rect(10, 15, vaccinationWidth - 10, 55);
+    drawTextR(drawContext, '💉', vaccinationTextRect, Color.white(), Font.mediumSystemFont(40));
 
     vaccinationTextRect = new Rect(6, 5, vaccinationWidth - 10, 25);
     drawTextR(drawContext, bundesLand, vaccinationTextRect, Color.white(), Font.mediumSystemFont(22));
@@ -540,14 +559,14 @@ async function createWidget(items) {
       sum /= ewz;
 
       history[i - 6] = {
-        weekIncidence: Math.floor(sum),
+        weekIncidence: sum,
         date: countyData.features[i].attributes.Meldedatum
       };
     }
   }
 
   for (let i = 0; i < history.length; i++) {
-    history[i].weekIncidence = Math.floor(history[i].weekIncidence);
+    history[i].weekIncidence = (showDecimal ? Math.round(history[i].weekIncidence * 10) / 10 : Math.floor(history[i].weekIncidence));
     let aux = history[i].weekIncidence;
     max = (aux > max || max == undefined ? aux : max);
   }
@@ -619,7 +638,7 @@ async function createWidget(items) {
         const bundesLandRect = new Rect(x, y + 3, width, 23);
         drawTextR(graphDrawContext, "DE", bundesLandRect, dayColor, Font.mediumSystemFont(21));
         const bundesLandIncidenceRect = new Rect(x, y - 28, width, 23);
-        drawTextR(graphDrawContext, Math.floor(germanyData.weekIncidence), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(21));
+        drawTextR(graphDrawContext, (showDecimal ? Math.round(germanyData.weekIncidence * 10) / 10 : Math.floor(germanyData.weekIncidence)), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(21));
 
         if (showRValue) {
           let rRect = new Rect(x, graphBottom - 28, width, 23);
