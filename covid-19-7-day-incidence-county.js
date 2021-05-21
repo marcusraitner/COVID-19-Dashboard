@@ -84,11 +84,11 @@ const incidenceColors = [{
 // colors for covid beds highlighting
 const colorCovidBed = new Color('#DC2F02', 1);
 const colorCovidBedVentilation = new Color('#9D0208', 1);
+const bedsLineColor = new Color('#939598', 1);
+const bedsLineFreeColor = new Color('#4D8802', 1);
 
 // other colors
 const accentColor2 = Color.lightGray(); // used for weekends
-const bedsLineColor = new Color('#939598', 1);
-const bedsLineFreeColor = new Color('#4D8802', 1);
 const vaccinationColor = new Color('#00848C', 1);
 const vaccinationBoosterColor = new Color('#004156', 1);
 
@@ -837,5 +837,5 @@ function getColor(value) {
 }
 
 function roundIncidence (incidence) {
-  return (showDecimal ? Math.round(incidence * 10) / 10 : Math.floor(attr.cases7_bl_per_100k))
+  return (showDecimal ? Math.round(incidence * 10) / 10 : Math.floor(incidence))
 }
