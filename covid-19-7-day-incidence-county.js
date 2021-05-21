@@ -765,7 +765,13 @@ async function createWidget(items) {
       drawContext.setTextAlignedRight();
     }
 
-    drawContext.drawTextInRect('🦠C19: ' + cases + ' (davon ' + casesBeatmet + ' beatmet)', covidRect);
+    let c19Label = '🦠C19: ' + cases;
+
+    if (cases > 0) {
+      c19Label = c19Label + ' (davon ' + casesBeatmet + ' beatmet)'
+    }
+
+    drawContext.drawTextInRect(c19Label, covidRect);
     leftStack.addImage(drawContext.getImage());
   }
 
