@@ -639,7 +639,7 @@ async function createWidget(items) {
         const bundesLandRect = new Rect(x, y + 3, width, 23);
         drawTextR(graphDrawContext, "DE", bundesLandRect, dayColor, Font.mediumSystemFont(21));
         const bundesLandIncidenceRect = new Rect(x, y - 28, width, 23);
-        drawTextR(graphDrawContext, germanyData.weekIncidence.toFixed(1), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(21));
+        drawTextR(graphDrawContext, (showDecimal ? germanyData.weekIncidence.toFixed(1) : germanyData.weekIncidence), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(21));
 
         if (showRValue) {
           let rRect = new Rect(x, graphBottom - 28, width, 23);
@@ -670,7 +670,7 @@ async function createWidget(items) {
       const bundesLandRect = new Rect(x1, y + 3, vertLineWeight, 23);
       drawTextR(graphDrawContext, bundesLand, bundesLandRect, dayColor, Font.mediumSystemFont(21));
       const bundesLandIncidenceRect = new Rect(x1, y - 28, vertLineWeight, 23);
-      drawTextR(graphDrawContext, incidenceBl.toFixed(1), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(21));
+      drawTextR(graphDrawContext, (showDecimal ? incidenceBl.toFixed(1): incidenceBl), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(21));
     }
 
     drawColor = getColor(cases);
@@ -685,7 +685,7 @@ async function createWidget(items) {
       drawRoundedRect(graphDrawContext, rect, new Color("#FFFFFF", .4), 4);
     }
 
-    drawTextR(graphDrawContext, cases.toFixed(1), casesRect, dayColor, Font.mediumSystemFont(21));
+    drawTextR(graphDrawContext, (showDecimal ? cases.toFixed(1) : cases), casesRect, dayColor, Font.mediumSystemFont(21));
     drawTextR(graphDrawContext, day, dayRect, dayColor, Font.mediumSystemFont(21));
 
   }
