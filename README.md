@@ -4,6 +4,8 @@ Dieses [Scriptable](https://scriptable.app)-Skript erzeugt ein Widget, das den V
 
 ![IMG_1027](https://user-images.githubusercontent.com/65543240/119034702-ec030100-b9ae-11eb-9e88-d9c031c2b869.jpeg)
 
+Derzeit gibt es das Widget nur in diesem mittelgroßen Format.
+
 ## Kontakt und Support
 
 * **Homepage:** https://github.com/marcusraitner/COVID-19-Dashboard
