@@ -349,7 +349,7 @@ async function createWidget(items) {
   var ags = attr.AGS;
   const bundesLand = stateToAbbr[attr.BL];
   const bl = attr.BL;
-  const incidenceBl = (showDecimal ? Math.round(attr.cases7_bl_per_100k * 10) / 10 : Math.floor(attr.cases7_bl_per_100k));
+  const incidenceBl = (showDecimal ? attr.cases7_bl_per_100k.toFixed(1) : Math.floor(attr.cases7_bl_per_100k));
 
   // Adjust width of bars for a decimal place
   if (showDecimal) {
@@ -566,7 +566,7 @@ async function createWidget(items) {
   }
 
   for (let i = 0; i < history.length; i++) {
-    history[i].weekIncidence = (showDecimal ? Math.round(history[i].weekIncidence * 10) / 10 : Math.floor(history[i].weekIncidence));
+    history[i].weekIncidence = (showDecimal ? history[i].weekIncidence.toFixed(1) : Math.floor(history[i].weekIncidence));
     let aux = history[i].weekIncidence;
     max = (aux > max || max == undefined ? aux : max);
   }
@@ -638,7 +638,7 @@ async function createWidget(items) {
         const bundesLandRect = new Rect(x, y + 3, width, 23);
         drawTextR(graphDrawContext, "DE", bundesLandRect, dayColor, Font.mediumSystemFont(21));
         const bundesLandIncidenceRect = new Rect(x, y - 28, width, 23);
-        drawTextR(graphDrawContext, (showDecimal ? Math.round(germanyData.weekIncidence * 10) / 10 : Math.floor(germanyData.weekIncidence)), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(21));
+        drawTextR(graphDrawContext, (showDecimal ? germanyData.weekIncidence.toFixed(1) : Math.floor(germanyData.weekIncidence)), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(21));
 
         if (showRValue) {
           let rRect = new Rect(x, graphBottom - 28, width, 23);
