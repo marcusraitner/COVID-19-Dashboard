@@ -64,9 +64,9 @@ Mit den Koordinaten des aktuellen Standorts (oder den mit `loc=` übergebenen Ko
 
 Aus den Tagesummen wird dann die 7-Tages-Inzidenz wie folgt berechnet: Inzidenz am Tag X = Summe (Tagessumme Tag X, Tagessumme Tag X-1, … Tagessumme Tag X - 6) / Einwohnerzahl.
 
-Die Inzidenzwerte werden standardmäßig _abgerundet_, weil es bezüglich der Maßnahmen auf die Unterschreitung von Schwellwerten ankommt. Wer will kann sich zusätzlich die erste Nachkommastelle anzeigen lassen mit der Option `decimal=y` (dann werden aber drei Tage in der Historie weniger angezeigt), z.B. so:
+Die Inzidenzwerte werden standardmäßig auf eine Nachkommastelle gerundet. Mit der Option `decimal=y` kann man sich diese auch anzeigen lassen (s. folgendes Bild; dann werden aber drei Tage in der Historie weniger angezeigt). Ansonsten werden die Inzidenzwerte _abgerundet_, weil es bezüglich der Maßnahmen auf die _Unterschreitung_ von Schwellwerten ankommt.
 
-![IMG_1031](https://user-images.githubusercontent.com/65543240/119142497-de995580-ba46-11eb-83e6-5204c11360f4.jpeg)
+![IMG_1032](https://user-images.githubusercontent.com/65543240/119223201-5b383c80-baf8-11eb-8aef-ceb09f577678.jpeg)
 
 Das RKI ordnet in ihrem offiziellen [Excel](https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Fallzahlen_Kum_Tab.html) den Inzidenzwert allerdings nicht dem aktuellsten Tag der Summe zu (Tag X) sondern dem nächsten (Tag X + 1). Falls gewünscht, kann dieses Verhalten  mit dem Paramter `rki=y`konfiguriert werden. Rein logisch kann es den Inzidenzwert von heute aber erst morgen geben und daher ist diese Einstellung der Default.
 
