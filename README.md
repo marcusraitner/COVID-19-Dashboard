@@ -66,7 +66,7 @@ Aus den Tagesummen wird dann die 7-Tages-Inzidenz wie folgt berechnet: Inzidenz 
 
 Die Inzidenzwerte werden standardmäßig auf eine Nachkommastelle gerundet. Mit der Option `decimal=y` kann man sich diese auch anzeigen lassen (s. folgendes Bild; dann werden aber drei Tage in der Historie weniger angezeigt). Ansonsten werden die Inzidenzwerte _abgerundet_, weil es bezüglich der Maßnahmen auf die _Unterschreitung_ von Schwellwerten ankommt.
 
-![IMG_1032](https://user-images.githubusercontent.com/65543240/119223201-5b383c80-baf8-11eb-8aef-ceb09f577678.jpeg)
+![IMG_1038](https://user-images.githubusercontent.com/65543240/119239040-8cd7f480-bb46-11eb-98c0-bf0c05e6aba5.jpeg)
 
 Das RKI ordnet in ihrem offiziellen [Excel](https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Fallzahlen_Kum_Tab.html) den Inzidenzwert allerdings nicht dem aktuellsten Tag der Summe zu (Tag X) sondern dem nächsten (Tag X + 1). Falls gewünscht, kann dieses Verhalten  mit dem Paramter `rki=y`konfiguriert werden. Rein logisch kann es den Inzidenzwert von heute aber erst morgen geben und daher ist diese Einstellung der Default.
 
