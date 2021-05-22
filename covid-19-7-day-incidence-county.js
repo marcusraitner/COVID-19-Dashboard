@@ -31,7 +31,7 @@ const imageBackground = false;
 const forceImageUpdate = false;
 
 // Show also the incidence for Germany in total
-var showGermanyValue = true;
+var showGermanyValue = false;
 
 // Show also the R-Value (only if showGermanyValue == true)
 var showRValue = true;
@@ -52,7 +52,7 @@ var showDaily = true;
 var useFrozen = false;
 
 // Show one decimal place
-var showDecimal = true;
+var showDecimal = false;
 
 // palette found here: https://coolors.co/03071e-370617-6a040f-9d0208-d00000-dc2f02-e85d04-f48c06-faa307-ffba08
 const incidenceColors = [{
