@@ -33,7 +33,7 @@ Beim Impfstatus werden zwei Werte angezeigt (für das Bundesland; auf Landkreise
 
 ### Links zu Coronaregeln
 
-Hinter dem Symbol 🚧 befindet sich ein Link zu den Coronaregeln des jeweiligen Bundeslandes (Quelle der Links: [Übersichtsseite der Bundesregierung](https://www.bundesregierung.de/breg-de/themen/coronavirus/corona-bundeslaender-1745198))
+Ein Klick auf die Überschrift bzw. den Landkreis öffnet die Coronaregeln des jeweiligen Bundeslandes (Quelle der Links: [Übersichtsseite der Bundesregierung](https://www.bundesregierung.de/breg-de/themen/coronavirus/corona-bundeslaender-1745198))
 
 ## Parameter
 
