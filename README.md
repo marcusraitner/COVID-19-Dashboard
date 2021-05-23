@@ -2,7 +2,7 @@
 
 Dieses [Scriptable](https://scriptable.app)-Skript erzeugt ein Widget, das den Verlauf der 7-Tage-Inzidenz und die Auslastung der Intensivbetten am aktuellen Standort innerhalb Deutschlands anzeigt. Zusätzlich angezeigt wird der aktuelle Wert der 7-Tage-Inzidenz des zugehörigen Bundeslandes und der Impfstatus des Bundeslandes. Optional kann auch der Inzidenzwert von Deutschland und der R-Wert für Deutschland angezeigt werden. Hier ein Beispiel für den Landkreis Ebersberg:
 
-![IMG_1037](https://user-images.githubusercontent.com/65543240/119238944-ff94a000-bb45-11eb-9555-34e494247cc8.jpeg)
+![IMG_1100](https://user-images.githubusercontent.com/65543240/119274167-e4419780-bc0e-11eb-80ae-a985437b1e14.jpeg)
 
 Derzeit gibt es das Widget nur in diesem mittelgroßen Format.
 
@@ -66,7 +66,7 @@ Aus den Tagesummen wird dann die 7-Tages-Inzidenz wie folgt berechnet: Inzidenz 
 
 Die Inzidenzwerte werden standardmäßig auf eine Nachkommastelle gerundet. Mit der Option `decimal=y` kann man sich diese auch anzeigen lassen (s. folgendes Bild; dann werden aber drei Tage in der Historie weniger angezeigt). Ansonsten werden die Inzidenzwerte _abgerundet_, weil es bezüglich der Maßnahmen auf die _Unterschreitung_ von Schwellwerten ankommt.
 
-![IMG_1038](https://user-images.githubusercontent.com/65543240/119239040-8cd7f480-bb46-11eb-98c0-bf0c05e6aba5.jpeg)
+![IMG_1099](https://user-images.githubusercontent.com/65543240/119274065-5ebde780-bc0e-11eb-93e5-89e7c49c3302.jpeg)
 
 Das RKI ordnet in ihrem offiziellen [Excel](https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Fallzahlen_Kum_Tab.html) den Inzidenzwert allerdings nicht dem aktuellsten Tag der Summe zu (Tag X) sondern dem nächsten (Tag X + 1). Falls gewünscht, kann dieses Verhalten  mit dem Paramter `rki=y`konfiguriert werden. Rein logisch kann es den Inzidenzwert von heute aber erst morgen geben und daher ist diese Einstellung der Default.
 
