@@ -15,6 +15,13 @@ Für Ideen und Fehlermeldungen bitte ein [Issue erstellen](https://github.com/ma
 
 ☕️ Einen Kaffee ausgeben: https://ko-fi.com/marcusraitner
 
+## Changelog
+### v1.7.0
+* Link zu den aktuellen Coronaregeln des jeweiligen Bundeslandes integriert ([#17](https://github.com/marcusraitner/COVID-19-Dashboard/issues/17))
+* Rundung der Inzidenzwerte angepasst; s. Kapitel _Berechnung_ ([#39](https://github.com/marcusraitner/COVID-19-Dashboard/issues/39))
+* Neuer Paramter `decimal=(y|n)` zur Anzeige der Inzidenz wahlweise mit einer Kommastelle ([#24](https://github.com/marcusraitner/COVID-19-Dashboard/issues/24))
+* Kleinere visuelle Anpassungen bei der Inzidenz von Bundesland und Deutschland und dem R-Wert ([#21](https://github.com/marcusraitner/COVID-19-Dashboard/issues/21), [#22](https://github.com/marcusraitner/COVID-19-Dashboard/issues/22), [#35](https://github.com/marcusraitner/COVID-19-Dashboard/issues/35))
+
 ## Erläuterung
 
 ### Balkendiagramm
