@@ -16,6 +16,7 @@
 // * 1.4.0: New feature: R-Value for Germany. Bugfix for date of incidence
 // * 1.5.0: Handling of parameters enhanced; see README for full reference
 // * 1.6.0: New feature: Use frozen values of RKI
+// * 1.7.0: New feature: Show one decimal (optional); improved rounding; minor visual improvements.
 
 //------------------------------------------------------------------------------
 // General Options Section
