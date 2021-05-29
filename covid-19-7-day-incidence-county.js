@@ -819,7 +819,7 @@ async function createWidget(items) {
   statusStack.addSpacer();
   let statusText = statusStack.addText("Datenstand: " + new Intl.DateTimeFormat('de-DE', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' }).format(updated) + " // Version: " + version);
   statusText.font = Font.lightSystemFont(8);
-  statusText.textColor = Color.grey();
+  statusText.textColor = Color.gray();
 
   return list;
 }
