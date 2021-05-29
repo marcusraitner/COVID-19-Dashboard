@@ -4,7 +4,7 @@
 // Licence: GNU GENERAL PUBLIC LICENSE, Version 3, 29 June 2007
 // Author: Marcus Raitner (https://fuehrung-erfahren.de)
 // Source: https://github.com/marcusraitner/COVID-19-Dashboard
-// Version: 1.7.0
+// Version: 1.8.0b
 // ## Changelog
 // * 1.0.1: Correction of layout of label for covid-beds
 // * 1.0.2: Bug-Fix for Saar-Pfalz-Kreis (using GEN instead of county for join)
@@ -17,6 +17,8 @@
 // * 1.5.0: Handling of parameters enhanced; see README for full reference
 // * 1.6.0: New feature: Use frozen values of RKI
 // * 1.7.0: New feature: Show one decimal (optional); improved rounding; minor visual improvements.
+
+const version = "1.8.0b"
 
 //------------------------------------------------------------------------------
 // General Options Section
@@ -376,6 +378,7 @@ async function createWidget(items) {
   const minDate = ('0' + (date.getMonth() + 1)).slice(-2) + '-' + ('0' + date.getDate()).slice(-2) + '-' + date.getFullYear();
 
   let countyData;
+  let updated;
 
   if (useFrozen) {
     if (!ags) {
@@ -414,6 +417,8 @@ async function createWidget(items) {
       list.addText('Keine Statistik gefunden.');
       return list;
     }
+
+    updated = new Date(countyData.meta.lastUpdate);
 
   } else {
     if (ags) {
@@ -457,6 +462,11 @@ async function createWidget(items) {
       return list;
     }
 
+    tmp = countyData.features[0].attributes.Datenstand.replace(" Uhr", "").split(",");
+    tmpDate = tmp[0].split(".");
+    tmpTime = tmp[1].split(":");
+
+    updated = new Date(tmpDate[2], tmpDate[1] - 1, tmpDate[0], tmpTime[0], tmpTime[1]);
   }
 
   let stack = list.addStack();
@@ -492,7 +502,7 @@ async function createWidget(items) {
     let quoteInitial = Math.round(vaccData.data.states[bundesLand].quote * 100);
     let quoteBooster = Math.round(vaccData.data.states[bundesLand].secondVaccination.quote * 100);
 
-    leftStack.setPadding(7, 7, 7, 0);
+    leftStack.setPadding(7, 7, 2, 0);
     stack.addSpacer(10);
 
     let rightStack = stack.addStack();
@@ -802,6 +812,14 @@ async function createWidget(items) {
     drawContext.drawTextInRect(c19Label, covidRect);
     leftStack.addImage(drawContext.getImage());
   }
+
+  let statusStack = leftStack.addStack();
+  statusStack.layoutHorizontally();
+  statusStack.setPadding(0,0,0,0);
+  statusStack.addSpacer();
+  let statusText = statusStack.addText("Datenstand: " + new Intl.DateTimeFormat('de-DE', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' }).format(updated) + " // Version: " + version);
+  statusText.font = Font.lightSystemFont(8);
+  statusText.textColor = Color.grey();
 
   return list;
 }
