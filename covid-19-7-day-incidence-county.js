@@ -4,7 +4,7 @@
 // Licence: GNU GENERAL PUBLIC LICENSE, Version 3, 29 June 2007
 // Author: Marcus Raitner (https://fuehrung-erfahren.de)
 // Source: https://github.com/marcusraitner/COVID-19-Dashboard
-// Version: 1.6.0
+// Version: 1.7.0
 // ## Changelog
 // * 1.0.1: Correction of layout of label for covid-beds
 // * 1.0.2: Bug-Fix for Saar-Pfalz-Kreis (using GEN instead of county for join)
@@ -351,6 +351,7 @@ async function createWidget(items) {
   const bundesLand = stateToAbbr[attr.BL];
   const bl = attr.BL;
   const incidenceBl = roundIncidence(attr.cases7_bl_per_100k);
+  const latestIncidence = attr.cases7_per_100k;
 
   // Adjust width of bars for a decimal place
   if (showDecimal) {
@@ -538,6 +539,16 @@ async function createWidget(items) {
 
   if (useFrozen) {
     history = countyData.data[ags].history;
+
+    // add the latest incidence in case if we miss the value for today
+    if (!isToday(new Date(history[history.length - 1].date))) {
+      const today = {
+        weekIncidence: latestIncidence,
+        date: new Date()
+      };
+
+      history.push(today);
+    }
   } else {
     for (let i = countyData.features.length - 1; i >= 6; i--) {
       dailyValues[i - 6] = countyData.features[i].attributes.AnzahlFall / ewz;
@@ -842,3 +853,10 @@ function formatIncidence (incidence) {
   const minDigits = (showDecimal ? 1 : 0);
   return Intl.NumberFormat('de-DE', { minimumFractionDigits: minDigits }).format(incidence);
 }
+
+function isToday (date) {
+    const today = new Date()
+    return date.getDate() === today.getDate() &&
+        date.getMonth() === today.getMonth() &&
+        date.getFullYear() === today.getFullYear();
+};
