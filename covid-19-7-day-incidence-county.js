@@ -18,7 +18,7 @@
 // * 1.6.0: New feature: Use frozen values of RKI
 // * 1.7.0: New feature: Show one decimal (optional); improved rounding; minor visual improvements.
 
-const version = "1.8.0b2"
+const version = "1.8.0b3"
 
 //------------------------------------------------------------------------------
 // General Options Section
@@ -57,7 +57,8 @@ var useFrozen = false;
 // Show one decimal place
 var showDecimal = false;
 
-var detail = 7;
+// number of days to show in detail
+var detail = 5;
 
 // palette found here: https://coolors.co/03071e-370617-6a040f-9d0208-d00000-dc2f02-e85d04-f48c06-faa307-ffba08
 const incidenceColors = [{
@@ -123,7 +124,10 @@ const DAY_IN_MICROSECONDS = 86400000;
 const widgetHeight = 338;
 const widgetWidth = 720;
 const graphLow = 0;
-const graphHeight = 200;
+var graphHeight = 175;
+var graphWidth = widgetWidth;
+const bedsHeight = 80;
+var bedsWidth = graphWidth;
 const bedsLineWidth = 12;
 const tickWidth = 4;
 const vaccinationWidth = 65;
@@ -304,6 +308,41 @@ async function createWidget(items) {
     }
   }
 
+  // Adjust dimensions
+  // get data for the last days
+  var days = 20;
+
+  if (showGermanyValue) {
+    days -= 1;
+  }
+
+  // Adjust number of days for showing decimal
+  if (showDecimal) {
+    days -= 3;
+  }
+
+  if (showVaccination) {
+    graphWidth = widgetWidth - vaccinationWidth - 10;
+    days -= 2;
+  } else {
+    graphWidth = widgetWidth;
+  }
+
+  // Adjust width of bars for a decimal place
+  if (showDecimal) {
+    spaceBetweenDays += smallSpace;
+    vertLineWeight += smallSpace;
+  }
+
+  // calculate days for showing history
+  days = (days - detail - 7) * (spaceBetweenDays / smallSpace) + detail + 7;
+
+  if (showIcu) {
+    bedsWidth = graphWidth;
+  } else {
+    graphHeight += bedsHeight;
+  }
+
   if (!location) {
     Location.setAccuracyToThreeKilometers();
     try {
@@ -364,27 +403,6 @@ async function createWidget(items) {
   const bl = attr.BL;
   const incidenceBl = roundIncidence(attr.cases7_bl_per_100k);
   const latestIncidence = attr.cases7_per_100k;
-
-  // Adjust width of bars for a decimal place
-  if (showDecimal) {
-    spaceBetweenDays += smallSpace;
-    vertLineWeight += smallSpace;
-  }
-
-  // get data for the last days
-  var days = 20;
-
-  if (showGermanyValue) {
-    days -= 1;
-  }
-
-  // Adjust number of days for showing decimal
-  if (showDecimal) {
-    days -= 3;
-  }
-
-  // calculate days for showing history
-  days = (days - detail - 7) * (spaceBetweenDays / smallSpace) + detail + 6;
 
   const date = new Date();
   date.setTime(date.getTime() - days * DAY_IN_MICROSECONDS);
@@ -494,9 +512,9 @@ async function createWidget(items) {
   incidenceText.textColor = Color.white();
   incidenceText.url = rulesUrl[attr.BL];
 
-  leftStack.addSpacer(5);
-
   if (showVaccination) {
+    leftStack.addSpacer(5);
+
     if (debug) {
       console.log("Getting vaccination data: " + vaccUrl);
     }
@@ -552,7 +570,7 @@ async function createWidget(items) {
 
     rightStack.addImage(drawContext.getImage());
   } else {
-    leftStack.setPadding(7, 7, 7, 7);
+    leftStack.setPadding(7, 7, 2, 7);
   }
 
   let min, max, diff;
@@ -609,7 +627,7 @@ async function createWidget(items) {
   diff = max - min;
 
   let graphDrawContext = new DrawContext();
-  graphDrawContext.size = new Size(widgetWidth, graphHeight);
+  graphDrawContext.size = new Size(graphWidth, graphHeight);
   graphDrawContext.opaque = false;
   graphDrawContext.setFont(Font.mediumSystemFont(22));
   graphDrawContext.setTextAlignedCenter();
@@ -643,7 +661,7 @@ async function createWidget(items) {
         germanyData.weekIncidence = roundIncidence(germanyData.weekIncidence);
         const delta = (germanyData.weekIncidence - min) / diff;
         const y = graphBottom - (barHeight * delta);
-        const x = widgetWidth - vertLineWeight;
+        const x = graphWidth - vertLineWeight;
 
         // draw rect in grey
         let rect = new Rect(x, y, vertLineWeight, barHeight * delta);
@@ -679,8 +697,7 @@ async function createWidget(items) {
       // Now draw the bar for the Bundesland
       const delta = (incidenceBl - min) / diff;
       const y = graphBottom - (barHeight * delta);
-      const x1 = spaceBetweenDays * (i + 1) + spaceBetweenDays / 3;
-      const x = (showGermanyValue ? widgetWidth - vertLineWeight - spaceBetweenDays : widgetWidth - vertLineWeight);
+      const x = (showGermanyValue ? graphWidth - vertLineWeight - spaceBetweenDays : graphWidth - vertLineWeight);
 
       // draw bar in grey
       let rect = new Rect(x, y, vertLineWeight, barHeight * delta);
@@ -777,8 +794,6 @@ async function createWidget(items) {
     const casesBeatmet = (!diviAttr.faelle_covid_aktuell_beatmet ? 0 : diviAttr.faelle_covid_aktuell_beatmet);
 
     drawContext = new DrawContext();
-    const bedsHeight = 80;
-    const bedsWidth = graphImage.size.width - 30;
     drawContext.size = new Size(bedsWidth, bedsHeight);
     drawContext.opaque = false;
 
@@ -861,6 +876,9 @@ async function createWidget(items) {
   }).format(updated) + " // Version: " + version);
   statusText.font = Font.lightSystemFont(8);
   statusText.textColor = Color.gray();
+  if (!showVaccination) {
+    statusStack.addSpacer();
+  }
 
   return list;
 }
