@@ -18,7 +18,7 @@
 // * 1.6.0: New feature: Use frozen values of RKI
 // * 1.7.0: New feature: Show one decimal (optional); improved rounding; minor visual improvements.
 
-const version = "1.8.0b3"
+const version = "1.8.0b4"
 
 //------------------------------------------------------------------------------
 // General Options Section
@@ -45,17 +45,11 @@ var showVaccination = true;
 // Toggle showing of ICU beds
 var showIcu = true;
 
-// use rki calculation scheme
-var rki = false;
-
 // show daily portion of incidence
 var showDaily = true;
 
 // Show frozen value for incidence instead of calculating it.
 var useFrozen = false;
-
-// Show one decimal place
-var showDecimal = false;
 
 // number of days to show in detail
 var detail = 5;
@@ -131,9 +125,9 @@ var bedsWidth = graphWidth;
 const bedsLineWidth = 12;
 const tickWidth = 4;
 const vaccinationWidth = 65;
-const smallSpace = 13;
+const smallSpace = 12;
 const gap = 3;
-var spaceBetweenDays = smallSpace * 4;
+var spaceBetweenDays = smallSpace * 5;
 var vertLineWeight = spaceBetweenDays - gap;
 const smallLineWeight = smallSpace - gap;
 
@@ -268,12 +262,6 @@ async function createWidget(items) {
         } else {
           showIcu = false;
         }
-      } else if (p[0].trim().toLowerCase() == "rki") {
-        if (p[1].trim().toLowerCase() == "y") {
-          rki = true;
-        } else {
-          rki = false;
-        }
       } else if (p[0].trim().toLowerCase() == "daily") {
         if (p[1].trim().toLowerCase() == "y") {
           showDaily = true;
@@ -285,12 +273,6 @@ async function createWidget(items) {
           useFrozen = true;
         } else {
           useFrozen = false;
-        }
-      } else if (p[0].trim().toLowerCase() == "decimal") {
-        if (p[1].trim().toLowerCase() == "y") {
-          showDecimal = true;
-        } else {
-          showDecimal = false;
         }
       } else if (p[0].trim().toLowerCase() == "days") {
         const parsed = Number.parseInt(p[1].trim());
@@ -310,15 +292,10 @@ async function createWidget(items) {
 
   // Adjust dimensions
   // get data for the last days
-  var days = 20;
+  var days = 18;
 
   if (showGermanyValue) {
     days -= 1;
-  }
-
-  // Adjust number of days for showing decimal
-  if (showDecimal) {
-    days -= 3;
   }
 
   if (showVaccination) {
@@ -326,12 +303,6 @@ async function createWidget(items) {
     days -= 2;
   } else {
     graphWidth = widgetWidth;
-  }
-
-  // Adjust width of bars for a decimal place
-  if (showDecimal) {
-    spaceBetweenDays += smallSpace;
-    vertLineWeight += smallSpace;
   }
 
   // calculate days for showing history
@@ -638,7 +609,7 @@ async function createWidget(items) {
 
   for (let i = 0; i < history.length; i++) {
     let date = new Date(history[i].date);
-    if (rki && !useFrozen) {
+    if (!useFrozen) {
       date.setDate(date.getDate() + 1);
     }
 
@@ -922,14 +893,13 @@ function getColor(value) {
 }
 
 function roundIncidence(incidence) {
-  incidence = Math.round(incidence * 10) / 10
-  return (showDecimal ? incidence : Math.floor(incidence))
+  incidence = Math.round(incidence * 10) / 10;
+  return incidence;
 }
 
 function formatIncidence(incidence) {
-  const minDigits = (showDecimal ? 1 : 0);
   return Intl.NumberFormat('de-DE', {
-    minimumFractionDigits: minDigits
+    minimumFractionDigits: 1
   }).format(incidence);
 }
 
