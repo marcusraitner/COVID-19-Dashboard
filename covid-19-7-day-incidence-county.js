@@ -18,7 +18,7 @@
 // * 1.6.0: New feature: Use frozen values of RKI
 // * 1.7.0: New feature: Show one decimal (optional); improved rounding; minor visual improvements.
 
-const version = "1.8.0b"
+const version = "1.8.0b5"
 
 //------------------------------------------------------------------------------
 // General Options Section
@@ -45,22 +45,19 @@ var showVaccination = true;
 // Toggle showing of ICU beds
 var showIcu = true;
 
-// use rki calculation scheme
-var rki = false;
-
 // show daily portion of incidence
 var showDaily = true;
 
 // Show frozen value for incidence instead of calculating it.
 var useFrozen = false;
 
-// Show one decimal place
-var showDecimal = false;
+// number of days to show in detail
+var detail = 5;
 
 // palette found here: https://coolors.co/03071e-370617-6a040f-9d0208-d00000-dc2f02-e85d04-f48c06-faa307-ffba08
 const incidenceColors = [{
     lower: 0,
-    color: new Color('#cccccf', 1)
+    color: new Color('#b1a7a6', 1)
   },
   {
     lower: 35,
@@ -87,7 +84,7 @@ const incidenceColors = [{
 // colors for covid beds highlighting
 const colorCovidBed = new Color('#DC2F02', 1);
 const colorCovidBedVentilation = new Color('#9D0208', 1);
-const bedsLineColor = new Color('#939598', 1);
+const bedsLineColor = new Color('#b1a7a6', 1);
 const bedsLineFreeColor = new Color('#4D8802', 1);
 
 // other colors
@@ -121,12 +118,18 @@ const DAY_IN_MICROSECONDS = 86400000;
 const widgetHeight = 338;
 const widgetWidth = 720;
 const graphLow = 0;
-const graphHeight = 170;
+var graphHeight = 175;
+var graphWidth = widgetWidth;
+const bedsHeight = 80;
+var bedsWidth = graphWidth;
 const bedsLineWidth = 12;
 const tickWidth = 4;
 const vaccinationWidth = 65;
-var spaceBetweenDays = 50;
-var vertLineWeight = 45;
+const smallSpace = 12;
+const gap = 3;
+var spaceBetweenDays = smallSpace * 5;
+var vertLineWeight = spaceBetweenDays - gap;
+const smallLineWeight = smallSpace - gap;
 
 // APIs
 const apiUrl = (location) => `https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_Landkreisdaten/FeatureServer/0/query?where=1%3D1&outFields=GEN,AGS,EWZ,EWZ_BL,cases,death_rate,deaths,cases7_per_100k,cases7_bl_per_100k,BL,county&geometry=${ location.longitude.toFixed( 3 ) }%2C${ location.latitude.toFixed( 3 ) }&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelWithin&returnGeometry=false&outSR=4326&f=json`;
@@ -259,12 +262,6 @@ async function createWidget(items) {
         } else {
           showIcu = false;
         }
-      } else if (p[0].trim().toLowerCase() == "rki") {
-        if (p[1].trim().toLowerCase() == "y") {
-          rki = true;
-        } else {
-          rki = false;
-        }
       } else if (p[0].trim().toLowerCase() == "daily") {
         if (p[1].trim().toLowerCase() == "y") {
           showDaily = true;
@@ -277,11 +274,10 @@ async function createWidget(items) {
         } else {
           useFrozen = false;
         }
-      } else if (p[0].trim().toLowerCase() == "decimal") {
-        if (p[1].trim().toLowerCase() == "y") {
-          showDecimal = true;
-        } else {
-          showDecimal = false;
+      } else if (p[0].trim().toLowerCase() == "days") {
+        const parsed = Number.parseInt(p[1].trim());
+        if (!Number.isNaN(parsed)) {
+          detail = parsed;
         }
       } else if (p.length == 1) {
         // for compatability with old syntax
@@ -292,6 +288,30 @@ async function createWidget(items) {
         };
       }
     }
+  }
+
+  // Adjust dimensions
+  // get data for the last days
+  var days = 18;
+
+  if (showGermanyValue) {
+    days -= 1;
+  }
+
+  if (showVaccination) {
+    graphWidth = widgetWidth - vaccinationWidth - 10;
+    days -= 2;
+  } else {
+    graphWidth = widgetWidth;
+  }
+
+  // calculate days for showing history
+  days = (days - detail - 7) * (spaceBetweenDays / smallSpace) + detail + 9;
+
+  if (showIcu) {
+    bedsWidth = graphWidth;
+  } else {
+    graphHeight += bedsHeight;
   }
 
   if (!location) {
@@ -354,24 +374,6 @@ async function createWidget(items) {
   const bl = attr.BL;
   const incidenceBl = roundIncidence(attr.cases7_bl_per_100k);
   const latestIncidence = attr.cases7_per_100k;
-
-  // Adjust width of bars for a decimal place
-  if (showDecimal) {
-    spaceBetweenDays += 13;
-    vertLineWeight += 13;
-  }
-
-  // get data for the last days
-  var days = 20;
-
-  if (showGermanyValue) {
-    days -= 1;
-  }
-
-  // Adjust number of days for showing decimal
-  if (showDecimal) {
-    days -= 3;
-  }
 
   const date = new Date();
   date.setTime(date.getTime() - days * DAY_IN_MICROSECONDS);
@@ -481,9 +483,9 @@ async function createWidget(items) {
   incidenceText.textColor = Color.white();
   incidenceText.url = rulesUrl[attr.BL];
 
-  leftStack.addSpacer();
-
   if (showVaccination) {
+    leftStack.addSpacer(5);
+
     if (debug) {
       console.log("Getting vaccination data: " + vaccUrl);
     }
@@ -539,7 +541,7 @@ async function createWidget(items) {
 
     rightStack.addImage(drawContext.getImage());
   } else {
-    leftStack.setPadding(7, 7, 7, 7);
+    leftStack.setPadding(7, 7, 2, 7);
   }
 
   let min, max, diff;
@@ -561,7 +563,10 @@ async function createWidget(items) {
     }
   } else {
     for (let i = countyData.features.length - 1; i >= 6; i--) {
-      dailyValues[i - 6] = countyData.features[i].attributes.AnzahlFall / ewz;
+      dailyValues[i - 6] = {
+        abs: countyData.features[i].attributes.AnzahlFall,
+        rel: countyData.features[i].attributes.AnzahlFall / ewz
+      };
 
       let sum = 0;
 
@@ -596,18 +601,19 @@ async function createWidget(items) {
   diff = max - min;
 
   let graphDrawContext = new DrawContext();
-  graphDrawContext.size = new Size(widgetWidth, graphHeight);
+  graphDrawContext.size = new Size(graphWidth, graphHeight);
   graphDrawContext.opaque = false;
-  graphDrawContext.setFont(Font.mediumSystemFont(22));
+  graphDrawContext.setFont(Font.mediumSystemFont(20));
   graphDrawContext.setTextAlignedCenter();
 
   const graphTop = 23;
   const graphBottom = graphHeight - 23;
   const barHeight = graphBottom - graphTop;
+  let dayColor;
 
   for (let i = 0; i < history.length; i++) {
     let date = new Date(history[i].date);
-    if (rki && !useFrozen) {
+    if (!useFrozen) {
       date.setDate(date.getDate() + 1);
     }
 
@@ -617,7 +623,6 @@ async function createWidget(items) {
     const delta = (cases - min) / diff;
 
     let drawColor;
-    let dayColor;
 
     if (dayOfWeek == 0 || dayOfWeek == 6) {
       dayColor = accentColor2;
@@ -625,92 +630,113 @@ async function createWidget(items) {
       dayColor = Color.white();
     }
 
-    if (i == history.length - 1) {
-      if (showGermanyValue) {
-        germanyData.weekIncidence = roundIncidence(germanyData.weekIncidence);
-        const delta = (germanyData.weekIncidence - min) / diff;
-        const y = graphBottom - (barHeight * delta);
-        const x = widgetWidth - vertLineWeight;
-
-        // draw rect in grey
-        let rect = new Rect(x, y, vertLineWeight, barHeight * delta);
-        drawRoundedRect(graphDrawContext, rect, new Color("#6c757d", 1), 4);
-
-        // draw border in color of incidence
-        drawColor = getColor(germanyData.weekIncidence);
-        rect = new Rect(x + 2, y + 2, vertLineWeight - 4, barHeight * delta - 4);
-        let path = new Path();
-        path.addRoundedRect(rect, 4, 4);
-        graphDrawContext.addPath(path);
-        graphDrawContext.setLineWidth(4);
-        graphDrawContext.setStrokeColor(drawColor);
-        graphDrawContext.strokePath();
-
-        // draw labels
-        const bundesLandRect = new Rect(x, y + 4, vertLineWeight, 23);
-        drawTextR(graphDrawContext, "DE", bundesLandRect, dayColor, Font.mediumSystemFont(21));
-        const bundesLandIncidenceRect = new Rect(x, y - 28, vertLineWeight, 23);
-        drawTextR(graphDrawContext, formatIncidence(germanyData.weekIncidence), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(21));
-
-        // draw R-value (if set)
-        if (showRValue) {
-          let rRect = new Rect(x - 20, graphBottom + 1, vertLineWeight + 20, 23);
-          drawTextR(graphDrawContext, "R:" + Intl.NumberFormat('de-DE', { minimumFractionDigits: 2 }).format(germanyData.r.value), rRect, dayColor, Font.mediumSystemFont(21));
-          // rRect = new Rect(x - 20, graphBottom - 28, vertLineWeight, 23);
-          // drawTextR(graphDrawContext, "R", rRect, dayColor, Font.mediumSystemFont(21));
-        }
-      }
-
-      // Now draw the bar for the Bundesland
-      const delta = (incidenceBl - min) / diff;
-      const y = graphBottom - (barHeight * delta);
-      const x1 = spaceBetweenDays * (i + 1) + spaceBetweenDays / 3;
-      const x = (showGermanyValue ? widgetWidth - vertLineWeight - spaceBetweenDays : widgetWidth - vertLineWeight);
-
-      // draw bar in grey
-      let rect = new Rect(x, y, vertLineWeight, barHeight * delta);
-      drawRoundedRect(graphDrawContext, rect, new Color("#343a40", 1), 4);
-
-      // draw border in color of incidence
-      drawColor = getColor(incidenceBl);
-      rect = new Rect(x + 2, y + 2, vertLineWeight - 4, barHeight * delta - 4);
-      path = new Path();
-      path.addRoundedRect(rect, 4, 4);
-      graphDrawContext.addPath(path);
-      graphDrawContext.setLineWidth(4);
-      graphDrawContext.setStrokeColor(drawColor);
-      graphDrawContext.strokePath();
-
-      // Draw labels
-      const bundesLandRect = new Rect(x, y + 4, vertLineWeight, 23);
-      drawTextR(graphDrawContext, bundesLand, bundesLandRect, dayColor, Font.mediumSystemFont(21));
-      const bundesLandIncidenceRect = new Rect(x, y - 28, vertLineWeight, 23);
-      drawTextR(graphDrawContext, formatIncidence(incidenceBl), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(21));
-    }
-
     // Draw bar
     drawColor = getColor(cases);
-    let rect = new Rect(spaceBetweenDays * i, graphBottom - (barHeight * delta), vertLineWeight, barHeight * delta);
-    drawRoundedRect(graphDrawContext, rect, drawColor, 4);
+
+    let x0;
+    let barWidth;
+
+    if (i < history.length - detail) {
+      x0 = smallSpace * i;
+      barWidth = smallLineWeight;
+    } else {
+      x0 = smallSpace * (history.length - detail) + spaceBetweenDays * (i - history.length + detail);
+      barWidth = vertLineWeight;
+    }
+
+    let rect = new Rect(x0, graphBottom - (barHeight * delta), barWidth, barHeight * delta);
+    drawRoundedRect(graphDrawContext, rect, drawColor, 2);
 
     // draw daily cases (if set)
     if (showDaily && !useFrozen) {
-      const dailyDelta = (dailyValues[i] - min) / diff;
-      rect = new Rect(spaceBetweenDays * i, graphBottom - (barHeight * dailyDelta), vertLineWeight, barHeight * dailyDelta);
-      drawRoundedRect(graphDrawContext, rect, new Color("#FFFFFF", .4), 4);
+      const dailyDelta = (dailyValues[i].rel - min) / diff;
+      const y = graphBottom - (barHeight * dailyDelta);
+      rect = new Rect(x0, y, barWidth, barHeight * dailyDelta);
+      drawRoundedRect(graphDrawContext, rect, new Color("#FFFFFF", .6), 2);
+      if (i >= history.length - detail) {
+        rect = new Rect(x0, y - 21, barWidth, 20);
+        drawTextR(graphDrawContext, "+" + dailyValues[i].abs, rect, new Color("#FFFFFF", .8), Font.mediumSystemFont(18));
+      }
     }
 
     // Draw labels
-    const casesRect = new Rect(spaceBetweenDays * i, graphBottom - (barHeight * delta) - 28, vertLineWeight, 23);
-    drawTextR(graphDrawContext, formatIncidence(cases), casesRect, dayColor, Font.mediumSystemFont(21));
-    const dayRect = new Rect(spaceBetweenDays * i, graphBottom + 1, vertLineWeight, 23);
-    drawTextR(graphDrawContext, day, dayRect, dayColor, Font.mediumSystemFont(21));
-
+    if (i < history.length - detail) {
+      if (dayOfWeek == 0 && i > 0 && i < history.length - detail - 1) {
+        const dayRect = new Rect(x0 - smallSpace, graphBottom + 1, 3 * smallSpace, 23);
+        drawTextR(graphDrawContext, day, dayRect, dayColor, Font.mediumSystemFont(20));
+      }
+    } else {
+      const casesRect = new Rect(x0, graphBottom - (barHeight * delta) - 28, barWidth, 23);
+      drawTextR(graphDrawContext, formatIncidence(cases), casesRect, dayColor, Font.mediumSystemFont(20));
+      const dayRect = new Rect(x0, graphBottom + 1, barWidth, 23);
+      drawTextR(graphDrawContext, day, dayRect, dayColor, Font.mediumSystemFont(20));
+    }
   }
+
+  // Draw bar for Germany
+  if (showGermanyValue) {
+    germanyData.weekIncidence = roundIncidence(germanyData.weekIncidence);
+    const delta = (germanyData.weekIncidence - min) / diff;
+    const y = graphBottom - (barHeight * delta);
+    const x = graphWidth - vertLineWeight;
+
+    // draw rect in grey
+    let rect = new Rect(x, y, vertLineWeight, barHeight * delta);
+    drawRoundedRect(graphDrawContext, rect, new Color("#6c757d", 1), 2);
+
+    // draw border in color of incidence
+    drawColor = getColor(germanyData.weekIncidence);
+    rect = new Rect(x + 2, y + 2, vertLineWeight - 4, barHeight * delta - 4);
+    let path = new Path();
+    path.addRoundedRect(rect, 2, 2);
+    graphDrawContext.addPath(path);
+    graphDrawContext.setLineWidth(4);
+    graphDrawContext.setStrokeColor(drawColor);
+    graphDrawContext.strokePath();
+
+    // draw labels
+    const bundesLandRect = new Rect(x, y + 4, vertLineWeight, 23);
+    drawTextR(graphDrawContext, "DE", bundesLandRect, dayColor, Font.mediumSystemFont(20));
+    const bundesLandIncidenceRect = new Rect(x, y - 28, vertLineWeight, 23);
+    drawTextR(graphDrawContext, formatIncidence(germanyData.weekIncidence), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(20));
+
+    // draw R-value (if set)
+    if (showRValue) {
+      let rRect = new Rect(x - 20, graphBottom + 1, vertLineWeight + 20, 23);
+      drawTextR(graphDrawContext, "R:" + Intl.NumberFormat('de-DE', {
+        minimumFractionDigits: 2
+      }).format(germanyData.r.value), rRect, dayColor, Font.mediumSystemFont(20));
+    }
+  }
+
+  // Now draw the bar for the Bundesland
+  const delta = (incidenceBl - min) / diff;
+  const y = graphBottom - (barHeight * delta);
+  const x = (showGermanyValue ? graphWidth - vertLineWeight - spaceBetweenDays : graphWidth - vertLineWeight);
+
+  // draw bar in grey
+  let rect = new Rect(x, y, vertLineWeight, barHeight * delta);
+  drawRoundedRect(graphDrawContext, rect, new Color("#343a40", 1), 2);
+
+  // draw border in color of incidence
+  drawColor = getColor(incidenceBl);
+  rect = new Rect(x + 2, y + 2, vertLineWeight - 4, barHeight * delta - 4);
+  path = new Path();
+  path.addRoundedRect(rect, 2, 2);
+  graphDrawContext.addPath(path);
+  graphDrawContext.setLineWidth(4);
+  graphDrawContext.setStrokeColor(drawColor);
+  graphDrawContext.strokePath();
+
+  // Draw labels
+  const bundesLandRect = new Rect(x, y + 4, vertLineWeight, 23);
+  drawTextR(graphDrawContext, bundesLand, bundesLandRect, dayColor, Font.mediumSystemFont(20));
+  const bundesLandIncidenceRect = new Rect(x, y - 28, vertLineWeight, 23);
+  drawTextR(graphDrawContext, formatIncidence(incidenceBl), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(20));
 
   let graphImage = graphDrawContext.getImage();
   leftStack.addImage(graphImage);
-  leftStack.addSpacer();
+  leftStack.addSpacer(5);
 
   if (showIcu) {
     // Get data for icu beds
@@ -743,8 +769,6 @@ async function createWidget(items) {
     const casesBeatmet = (!diviAttr.faelle_covid_aktuell_beatmet ? 0 : diviAttr.faelle_covid_aktuell_beatmet);
 
     drawContext = new DrawContext();
-    const bedsHeight = 80;
-    const bedsWidth = graphImage.size.width - 30;
     drawContext.size = new Size(bedsWidth, bedsHeight);
     drawContext.opaque = false;
 
@@ -813,13 +837,23 @@ async function createWidget(items) {
     leftStack.addImage(drawContext.getImage());
   }
 
+  // leftStack.addSpacer(3);
   let statusStack = leftStack.addStack();
   statusStack.layoutHorizontally();
-  statusStack.setPadding(0,0,0,0);
+  statusStack.setPadding(0, 0, 0, 0);
   statusStack.addSpacer();
-  let statusText = statusStack.addText("Datenstand: " + new Intl.DateTimeFormat('de-DE', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' }).format(updated) + " // Version: " + version);
+  let statusText = statusStack.addText("Datenstand: " + new Intl.DateTimeFormat('de-DE', {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric'
+  }).format(updated) + " // Version: " + version);
   statusText.font = Font.lightSystemFont(8);
   statusText.textColor = Color.gray();
+  if (!showVaccination) {
+    statusStack.addSpacer();
+  }
 
   return list;
 }
@@ -862,19 +896,20 @@ function getColor(value) {
   return col;
 }
 
-function roundIncidence (incidence) {
-  incidence = Math.round(incidence * 10) / 10
-  return (showDecimal ? incidence : Math.floor(incidence))
+function roundIncidence(incidence) {
+  incidence = Math.round(incidence * 10) / 10;
+  return incidence;
 }
 
-function formatIncidence (incidence) {
-  const minDigits = (showDecimal ? 1 : 0);
-  return Intl.NumberFormat('de-DE', { minimumFractionDigits: minDigits }).format(incidence);
+function formatIncidence(incidence) {
+  return Intl.NumberFormat('de-DE', {
+    minimumFractionDigits: 1
+  }).format(incidence);
 }
 
-function isToday (date) {
-    const today = new Date()
-    return date.getDate() === today.getDate() &&
-        date.getMonth() === today.getMonth() &&
-        date.getFullYear() === today.getFullYear();
+function isToday(date) {
+  const today = new Date()
+  return date.getDate() === today.getDate() &&
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear();
 };
