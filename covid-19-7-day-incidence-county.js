@@ -61,23 +61,23 @@ const incidenceColors = [{
   },
   {
     lower: 35,
-    color: new Color('#FFBA08', 1)
-  },
-  {
-    lower: 50,
     color: new Color('#F48C06', 1)
   },
   {
-    lower: 100,
+    lower: 50,
     color: new Color('#E85D04', 1)
   },
   {
+    lower: 100,
+    color: new Color('#D00000', 1)
+  },
+  {
     lower: 165,
-    color: new Color('#DC2F02', 1)
+    color: new Color('#6A040F', 1)
   },
   {
     lower: 200,
-    color: new Color('#9D0208', 1)
+    color: new Color('#370617', 1)
   }
 ];
 
@@ -292,7 +292,7 @@ async function createWidget(items) {
 
   // Adjust dimensions
   // get data for the last days
-  var days = 18;
+  var days = 17;
 
   if (showGermanyValue) {
     days -= 1;
@@ -300,7 +300,7 @@ async function createWidget(items) {
 
   if (showVaccination) {
     graphWidth = widgetWidth - vaccinationWidth - 10;
-    days -= 2;
+    days -= 1;
   } else {
     graphWidth = widgetWidth;
   }
@@ -656,14 +656,14 @@ async function createWidget(items) {
     drawRoundedRect(graphDrawContext, rect, drawColor, 2);
 
     // draw daily cases (if set)
-    if (showDaily && !useFrozen) {
-      const dailyDelta = (dailyValues[i].rel - min) / diff;
+    if (showDaily && !useFrozen && i < history.length - 1) {
+      const dailyDelta = (dailyValues[i + 1].rel - min) / diff;
       const y = graphBottom - (barHeight * dailyDelta);
       rect = new Rect(x0, y, barWidth, barHeight * dailyDelta);
-      drawRoundedRect(graphDrawContext, rect, new Color("#FFFFFF", .6), 2);
+      drawRoundedRect(graphDrawContext, rect, new Color("#FFFFFF", .7), 2);
       if (i >= history.length - detail) {
         rect = new Rect(x0, y - 21, barWidth, 20);
-        drawTextR(graphDrawContext, "+" + dailyValues[i].abs, rect, new Color("#FFFFFF", .8), Font.mediumSystemFont(18));
+        drawTextR(graphDrawContext, "+" + dailyValues[i + 1].abs, rect, Color.white(), Font.mediumSystemFont(18));
       }
     }
 
@@ -703,7 +703,7 @@ async function createWidget(items) {
     graphDrawContext.strokePath();
 
     // draw labels
-    const bundesLandRect = new Rect(x, y + 4, vertLineWeight, 23);
+    const bundesLandRect = new Rect(x, graphBottom - 28, vertLineWeight, 23);
     drawTextR(graphDrawContext, "DE", bundesLandRect, dayColor, Font.mediumSystemFont(20));
     const bundesLandIncidenceRect = new Rect(x, y - 28, vertLineWeight, 23);
     drawTextR(graphDrawContext, formatIncidence(germanyData.weekIncidence), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(20));
@@ -737,7 +737,7 @@ async function createWidget(items) {
   graphDrawContext.strokePath();
 
   // Draw labels
-  const bundesLandRect = new Rect(x, y + 4, vertLineWeight, 23);
+  const bundesLandRect = new Rect(x, graphBottom - 28, vertLineWeight, 23);
   drawTextR(graphDrawContext, bundesLand, bundesLandRect, dayColor, Font.mediumSystemFont(20));
   const bundesLandIncidenceRect = new Rect(x, y - 28, vertLineWeight, 23);
   drawTextR(graphDrawContext, formatIncidence(incidenceBl), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(20));
