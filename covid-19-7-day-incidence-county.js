@@ -18,7 +18,7 @@
 // * 1.6.0: New feature: Use frozen values of RKI
 // * 1.7.0: New feature: Show one decimal (optional); improved rounding; minor visual improvements.
 
-const version = "1.8.0b4"
+const version = "1.8.0b5"
 
 //------------------------------------------------------------------------------
 // General Options Section
@@ -57,7 +57,7 @@ var detail = 5;
 // palette found here: https://coolors.co/03071e-370617-6a040f-9d0208-d00000-dc2f02-e85d04-f48c06-faa307-ffba08
 const incidenceColors = [{
     lower: 0,
-    color: new Color('#cccccf', 1)
+    color: new Color('#b1a7a6', 1)
   },
   {
     lower: 35,
@@ -84,7 +84,7 @@ const incidenceColors = [{
 // colors for covid beds highlighting
 const colorCovidBed = new Color('#DC2F02', 1);
 const colorCovidBedVentilation = new Color('#9D0208', 1);
-const bedsLineColor = new Color('#939598', 1);
+const bedsLineColor = new Color('#b1a7a6', 1);
 const bedsLineFreeColor = new Color('#4D8802', 1);
 
 // other colors
@@ -306,7 +306,7 @@ async function createWidget(items) {
   }
 
   // calculate days for showing history
-  days = (days - detail - 7) * (spaceBetweenDays / smallSpace) + detail + 7;
+  days = (days - detail - 7) * (spaceBetweenDays / smallSpace) + detail + 9;
 
   if (showIcu) {
     bedsWidth = graphWidth;
@@ -563,7 +563,10 @@ async function createWidget(items) {
     }
   } else {
     for (let i = countyData.features.length - 1; i >= 6; i--) {
-      dailyValues[i - 6] = countyData.features[i].attributes.AnzahlFall / ewz;
+      dailyValues[i - 6] = {
+        abs: countyData.features[i].attributes.AnzahlFall,
+        rel: countyData.features[i].attributes.AnzahlFall / ewz
+      };
 
       let sum = 0;
 
@@ -600,12 +603,13 @@ async function createWidget(items) {
   let graphDrawContext = new DrawContext();
   graphDrawContext.size = new Size(graphWidth, graphHeight);
   graphDrawContext.opaque = false;
-  graphDrawContext.setFont(Font.mediumSystemFont(22));
+  graphDrawContext.setFont(Font.mediumSystemFont(20));
   graphDrawContext.setTextAlignedCenter();
 
   const graphTop = 23;
   const graphBottom = graphHeight - 23;
   const barHeight = graphBottom - graphTop;
+  let dayColor;
 
   for (let i = 0; i < history.length; i++) {
     let date = new Date(history[i].date);
@@ -619,76 +623,11 @@ async function createWidget(items) {
     const delta = (cases - min) / diff;
 
     let drawColor;
-    let dayColor;
 
     if (dayOfWeek == 0 || dayOfWeek == 6) {
       dayColor = accentColor2;
     } else {
       dayColor = Color.white();
-    }
-
-    if (i == history.length - 1) {
-      if (showGermanyValue) {
-        germanyData.weekIncidence = roundIncidence(germanyData.weekIncidence);
-        const delta = (germanyData.weekIncidence - min) / diff;
-        const y = graphBottom - (barHeight * delta);
-        const x = graphWidth - vertLineWeight;
-
-        // draw rect in grey
-        let rect = new Rect(x, y, vertLineWeight, barHeight * delta);
-        drawRoundedRect(graphDrawContext, rect, new Color("#6c757d", 1), 2);
-
-        // draw border in color of incidence
-        drawColor = getColor(germanyData.weekIncidence);
-        rect = new Rect(x + 2, y + 2, vertLineWeight - 4, barHeight * delta - 4);
-        let path = new Path();
-        path.addRoundedRect(rect, 2, 2);
-        graphDrawContext.addPath(path);
-        graphDrawContext.setLineWidth(4);
-        graphDrawContext.setStrokeColor(drawColor);
-        graphDrawContext.strokePath();
-
-        // draw labels
-        const bundesLandRect = new Rect(x, y + 4, vertLineWeight, 23);
-        drawTextR(graphDrawContext, "DE", bundesLandRect, dayColor, Font.mediumSystemFont(21));
-        const bundesLandIncidenceRect = new Rect(x, y - 28, vertLineWeight, 23);
-        drawTextR(graphDrawContext, formatIncidence(germanyData.weekIncidence), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(21));
-
-        // draw R-value (if set)
-        if (showRValue) {
-          let rRect = new Rect(x - 20, graphBottom + 1, vertLineWeight + 20, 23);
-          drawTextR(graphDrawContext, "R:" + Intl.NumberFormat('de-DE', {
-            minimumFractionDigits: 2
-          }).format(germanyData.r.value), rRect, dayColor, Font.mediumSystemFont(21));
-          // rRect = new Rect(x - 20, graphBottom - 28, vertLineWeight, 23);
-          // drawTextR(graphDrawContext, "R", rRect, dayColor, Font.mediumSystemFont(21));
-        }
-      }
-
-      // Now draw the bar for the Bundesland
-      const delta = (incidenceBl - min) / diff;
-      const y = graphBottom - (barHeight * delta);
-      const x = (showGermanyValue ? graphWidth - vertLineWeight - spaceBetweenDays : graphWidth - vertLineWeight);
-
-      // draw bar in grey
-      let rect = new Rect(x, y, vertLineWeight, barHeight * delta);
-      drawRoundedRect(graphDrawContext, rect, new Color("#343a40", 1), 2);
-
-      // draw border in color of incidence
-      drawColor = getColor(incidenceBl);
-      rect = new Rect(x + 2, y + 2, vertLineWeight - 4, barHeight * delta - 4);
-      path = new Path();
-      path.addRoundedRect(rect, 2, 2);
-      graphDrawContext.addPath(path);
-      graphDrawContext.setLineWidth(4);
-      graphDrawContext.setStrokeColor(drawColor);
-      graphDrawContext.strokePath();
-
-      // Draw labels
-      const bundesLandRect = new Rect(x, y + 4, vertLineWeight, 23);
-      drawTextR(graphDrawContext, bundesLand, bundesLandRect, dayColor, Font.mediumSystemFont(21));
-      const bundesLandIncidenceRect = new Rect(x, y - 28, vertLineWeight, 23);
-      drawTextR(graphDrawContext, formatIncidence(incidenceBl), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(21));
     }
 
     // Draw bar
@@ -710,25 +649,90 @@ async function createWidget(items) {
 
     // draw daily cases (if set)
     if (showDaily && !useFrozen) {
-      const dailyDelta = (dailyValues[i] - min) / diff;
-      rect = new Rect(x0, graphBottom - (barHeight * dailyDelta), barWidth, barHeight * dailyDelta);
-      drawRoundedRect(graphDrawContext, rect, new Color("#FFFFFF", .4), 2);
+      const dailyDelta = (dailyValues[i].rel - min) / diff;
+      const y = graphBottom - (barHeight * dailyDelta);
+      rect = new Rect(x0, y, barWidth, barHeight * dailyDelta);
+      drawRoundedRect(graphDrawContext, rect, new Color("#FFFFFF", .6), 2);
+      if (i >= history.length - detail) {
+        rect = new Rect(x0, y - 21, barWidth, 20);
+        drawTextR(graphDrawContext, "+" + dailyValues[i].abs, rect, new Color("#FFFFFF", .8), Font.mediumSystemFont(18));
+      }
     }
 
     // Draw labels
     if (i < history.length - detail) {
       if (dayOfWeek == 0 && i > 0 && i < history.length - detail - 1) {
         const dayRect = new Rect(x0 - smallSpace, graphBottom + 1, 3 * smallSpace, 23);
-        drawTextR(graphDrawContext, day, dayRect, dayColor, Font.mediumSystemFont(21));
-        // drawLine(graphDrawContext, new Point(x0 + smallLineWeight / 2, graphBottom), new Point(x0 + smallLineWeight / 2, graphBottom + 5), 2, dayColor);
+        drawTextR(graphDrawContext, day, dayRect, dayColor, Font.mediumSystemFont(20));
       }
     } else {
       const casesRect = new Rect(x0, graphBottom - (barHeight * delta) - 28, barWidth, 23);
-      drawTextR(graphDrawContext, formatIncidence(cases), casesRect, dayColor, Font.mediumSystemFont(21));
+      drawTextR(graphDrawContext, formatIncidence(cases), casesRect, dayColor, Font.mediumSystemFont(20));
       const dayRect = new Rect(x0, graphBottom + 1, barWidth, 23);
-      drawTextR(graphDrawContext, day, dayRect, dayColor, Font.mediumSystemFont(21));
+      drawTextR(graphDrawContext, day, dayRect, dayColor, Font.mediumSystemFont(20));
     }
   }
+
+  // Draw bar for Germany
+  if (showGermanyValue) {
+    germanyData.weekIncidence = roundIncidence(germanyData.weekIncidence);
+    const delta = (germanyData.weekIncidence - min) / diff;
+    const y = graphBottom - (barHeight * delta);
+    const x = graphWidth - vertLineWeight;
+
+    // draw rect in grey
+    let rect = new Rect(x, y, vertLineWeight, barHeight * delta);
+    drawRoundedRect(graphDrawContext, rect, new Color("#6c757d", 1), 2);
+
+    // draw border in color of incidence
+    drawColor = getColor(germanyData.weekIncidence);
+    rect = new Rect(x + 2, y + 2, vertLineWeight - 4, barHeight * delta - 4);
+    let path = new Path();
+    path.addRoundedRect(rect, 2, 2);
+    graphDrawContext.addPath(path);
+    graphDrawContext.setLineWidth(4);
+    graphDrawContext.setStrokeColor(drawColor);
+    graphDrawContext.strokePath();
+
+    // draw labels
+    const bundesLandRect = new Rect(x, y + 4, vertLineWeight, 23);
+    drawTextR(graphDrawContext, "DE", bundesLandRect, dayColor, Font.mediumSystemFont(20));
+    const bundesLandIncidenceRect = new Rect(x, y - 28, vertLineWeight, 23);
+    drawTextR(graphDrawContext, formatIncidence(germanyData.weekIncidence), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(20));
+
+    // draw R-value (if set)
+    if (showRValue) {
+      let rRect = new Rect(x - 20, graphBottom + 1, vertLineWeight + 20, 23);
+      drawTextR(graphDrawContext, "R:" + Intl.NumberFormat('de-DE', {
+        minimumFractionDigits: 2
+      }).format(germanyData.r.value), rRect, dayColor, Font.mediumSystemFont(20));
+    }
+  }
+
+  // Now draw the bar for the Bundesland
+  const delta = (incidenceBl - min) / diff;
+  const y = graphBottom - (barHeight * delta);
+  const x = (showGermanyValue ? graphWidth - vertLineWeight - spaceBetweenDays : graphWidth - vertLineWeight);
+
+  // draw bar in grey
+  let rect = new Rect(x, y, vertLineWeight, barHeight * delta);
+  drawRoundedRect(graphDrawContext, rect, new Color("#343a40", 1), 2);
+
+  // draw border in color of incidence
+  drawColor = getColor(incidenceBl);
+  rect = new Rect(x + 2, y + 2, vertLineWeight - 4, barHeight * delta - 4);
+  path = new Path();
+  path.addRoundedRect(rect, 2, 2);
+  graphDrawContext.addPath(path);
+  graphDrawContext.setLineWidth(4);
+  graphDrawContext.setStrokeColor(drawColor);
+  graphDrawContext.strokePath();
+
+  // Draw labels
+  const bundesLandRect = new Rect(x, y + 4, vertLineWeight, 23);
+  drawTextR(graphDrawContext, bundesLand, bundesLandRect, dayColor, Font.mediumSystemFont(20));
+  const bundesLandIncidenceRect = new Rect(x, y - 28, vertLineWeight, 23);
+  drawTextR(graphDrawContext, formatIncidence(incidenceBl), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(20));
 
   let graphImage = graphDrawContext.getImage();
   leftStack.addImage(graphImage);
