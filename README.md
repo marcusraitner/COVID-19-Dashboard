@@ -2,7 +2,7 @@
 
 Dieses [Scriptable](https://scriptable.app)-Skript erzeugt ein Widget, das den Verlauf der 7-Tage-Inzidenz und die Auslastung der Intensivbetten am aktuellen Standort innerhalb Deutschlands anzeigt. Zusätzlich angezeigt wird der aktuelle Wert der 7-Tage-Inzidenz des zugehörigen Bundeslandes und der Impfstatus des Bundeslandes. Optional (Paramter `de=y`) kann auch der Inzidenzwert von Deutschland und der R-Wert für Deutschland angezeigt werden. Hier ein Beispiel für den Landkreis Ebersberg:
 
-![IMG_1180](https://user-images.githubusercontent.com/65543240/120892077-b5fb8900-c60c-11eb-9e80-4c405e26b780.jpeg)
+![IMG_1183](https://user-images.githubusercontent.com/65543240/120902681-fcb7a600-c641-11eb-8a2d-e98d061166b8.jpeg)
 
 Derzeit gibt es das Widget nur in diesem mittelgroßen Format.
 
@@ -18,6 +18,12 @@ Für Ideen und Fehlermeldungen bitte ein [Issue erstellen](https://github.com/ma
 ## Changelog
 
 ### v1.8.0
+* Die Darstellung der Inzidenzwerte wurde komplett überarbeitet und bietet jetzt detaillierte Informationen für die letzten Tage (konfigurierbar über den Parameter `days`) und darüberhinaus den Verlauf der Inzidenz mit schmalen Balken ([#48](https://github.com/marcusraitner/COVID-19-Dashboard/issues/48)).
+* Die Darstellung der Inzidenzwerte wurde optimiert, dass der zur Verfügung stehende Platz (insbes. mit `icu=n` oder `vac=n`) besser genutzt wird ([#55](https://github.com/marcusraitner/COVID-19-Dashboard/issues/55)).  
+* In der Statuszeile ganz unten wird die Aktualität des Datenstands (der Inzidenzwerte) und die Version des Skripts angezeigt ([#54](https://github.com/marcusraitner/COVID-19-Dashboard/issues/54) und [#37](https://github.com/marcusraitner/COVID-19-Dashboard/issues/37)).
+* Für den Fall, dass morgens der Wert des aktuellen Tages (bei `frozen=y`) fehlt, wird er aus der RKI-Schnittstelle ergänzt ([#45](https://github.com/marcusraitner/COVID-19-Dashboard/issues/45)).
+* Die Paramter `rki=y` und `decimal=y` sind entfallen ([#51](https://github.com/marcusraitner/COVID-19-Dashboard/issues/51)). 
+* Die absolute Anzahl der Neuinfektionen wird mit `daily=y` angezeigt [#46](https://github.com/marcusraitner/COVID-19-Dashboard/issues/46).
 
 
 ### v1.7.0
@@ -57,12 +63,6 @@ Das Widget erlaubt folgende Parameter in beliebiger Reihenfolge mit Semikolon ("
 * `frozen=(y|n)`: bestimmt, ob die "eingefrorenen" Werte des RKI verwendet werden sollen (s. Berechnung). Default: `frozen=n`
 * `days=[0…10]`: legt fest, wie viele Tage detailliert angezeigt werden sollen. Die Anzahl der maximal möglichen Tage wird ggf. automatisch beschränkt, falls `de=y` oder `vac=y`. Default: `days=5`
 
-## Installation
-
-### Direkte Installation
-
-### Installation mit Scriptdude
-
 ## Datenquellen
 
 * **RKI Landkreisdaten:** Werte je Landkreis ermittelt aus den Koordinaten ([Quelle](https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_Landkreisdaten/FeatureServer))
@@ -78,6 +78,6 @@ Mit den Koordinaten des aktuellen Standorts (oder den mit `loc=` übergebenen Ko
 
 Aus den Tagesummen wird dann die 7-Tages-Inzidenz wie folgt berechnet: Inzidenz am Tag X + 1 = Summe (Tagessumme Tag X, Tagessumme Tag X-1, … Tagessumme Tag X - 6) / Einwohnerzahl. Die Inzidenzwerte werden auf eine Nachkommastelle gerundet. In diesem Beispiel vom 5.6.2021 berechnet sich der Inzidenzwert von `24,4` für den 4.6.2021 aus den Meldungen der sieben Tage davor (also bis einschließlich 3.6.2021). Zusätzlich angezeigt wird je Tag in der Vergangenheit (also nicht für den heutigen Tag, weil diese Zahlen noch nicht vorliegen) der Zuwachs an Fällen einerseits durch den hellen Balken (neue Fälle dieses Tages je 100.000 Einwohner) plus die absolute Anzahl, in diesem Fall waren das am 4.6.2021 hier in Ebersberg ein neuer Fall.
  
-![IMG_1181](https://user-images.githubusercontent.com/65543240/120892095-c449a500-c60c-11eb-9298-666e8cddeb8e.jpeg)
+![IMG_1187](https://user-images.githubusercontent.com/65543240/120902717-3688ac80-c642-11eb-87bd-59452f442619.jpeg)
 
 Für diese Berechnung werden die Werte immer aktuell geholt, d.h. dass sich aufgrund Nachmeldungen die Werte in der Vergangenheit gegenüber einem Snapshot von gestern auch ändern können. Das ist so gewollt und aus meiner Sicht auch logisch. Im offiziellen [Excel](https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Fallzahlen_Kum_Tab.html) des RKI, von dessen Werten die Maßnahmen abhängig sind, wird das aber anders gehandhabt. Dort wird der Wert jeden Tag eingefroren und nicht mehr aufgrund von Nachmeldungen verändert. Diese Logik kann über den Paramter `frozen=y` explizit gesetzt werden.
