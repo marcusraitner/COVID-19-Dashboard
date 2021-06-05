@@ -305,6 +305,14 @@ async function createWidget(items) {
     graphWidth = widgetWidth;
   }
 
+  if (detail < 0) {
+    detail = 0;
+  }
+
+  if (detail > days - 7) {
+    detail = days - 7;
+  }
+
   // calculate days for showing history
   days = (days - detail - 7) * (spaceBetweenDays / smallSpace) + detail + 9;
 
