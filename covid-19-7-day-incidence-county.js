@@ -17,8 +17,9 @@
 // * 1.5.0: Handling of parameters enhanced; see README for full reference
 // * 1.6.0: New feature: Use frozen values of RKI
 // * 1.7.0: New feature: Show one decimal (optional); improved rounding; minor visual improvements.
+// * 1.8.0: Complete redesign of incidence graph and some minor adjustments
 
-const version = "1.8.0b5"
+const version = "1.8.0"
 
 //------------------------------------------------------------------------------
 // General Options Section
