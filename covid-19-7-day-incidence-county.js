@@ -19,7 +19,7 @@
 // * 1.7.0: New feature: Show one decimal (optional); improved rounding; minor visual improvements.
 // * 1.8.0: Complete redesign of incidence graph and some minor adjustments
 
-const version = "1.8.0"
+const version = "1.9.0b1"
 
 //------------------------------------------------------------------------------
 // General Options Section
@@ -54,6 +54,9 @@ var useFrozen = false;
 
 // number of days to show in detail
 var detail = 5;
+
+// show values for the state
+var showBl = true;
 
 // palette found here: https://coolors.co/03071e-370617-6a040f-9d0208-d00000-dc2f02-e85d04-f48c06-faa307-ffba08
 const incidenceColors = [{
@@ -245,6 +248,12 @@ async function createWidget(items) {
         } else {
           showGermanyValue = false;
         }
+      } else if (p[0].trim().toLowerCase() == "bl") {
+        if (p[1].trim().toLowerCase() == "y") {
+          showBl = true;
+        } else {
+          showBl = false;
+        }
       } else if (p[0].trim().toLowerCase() == "rval") {
         if (p[1].trim().toLowerCase() == "y") {
           showRValue = true;
@@ -293,9 +302,13 @@ async function createWidget(items) {
 
   // Adjust dimensions
   // get data for the last days
-  var days = 17;
+  var days = 18;
 
   if (showGermanyValue) {
+    days -= 1;
+  }
+
+  if (showBl) {
     days -= 1;
   }
 
@@ -316,6 +329,14 @@ async function createWidget(items) {
 
   // calculate days for showing history
   days = (days - detail - 7) * (spaceBetweenDays / smallSpace) + detail + 9;
+
+if (!showBl && !showGermanyValue) {
+  days += 2;
+}
+
+if (!showVaccination) {
+  days += 1;
+}
 
   if (showIcu) {
     bedsWidth = graphWidth;
@@ -719,29 +740,31 @@ async function createWidget(items) {
   }
 
   // Now draw the bar for the Bundesland
-  const delta = (incidenceBl - min) / diff;
-  const y = graphBottom - (barHeight * delta);
-  const x = (showGermanyValue ? graphWidth - vertLineWeight - spaceBetweenDays : graphWidth - vertLineWeight);
+  if (showBl) {
+    const delta = (incidenceBl - min) / diff;
+    const y = graphBottom - (barHeight * delta);
+    const x = (showGermanyValue ? graphWidth - vertLineWeight - spaceBetweenDays : graphWidth - vertLineWeight);
 
-  // draw bar in grey
-  let rect = new Rect(x, y, vertLineWeight, barHeight * delta);
-  drawRoundedRect(graphDrawContext, rect, new Color("#343a40", 1), 2);
+    // draw bar in grey
+    let rect = new Rect(x, y, vertLineWeight, barHeight * delta);
+    drawRoundedRect(graphDrawContext, rect, new Color("#343a40", 1), 2);
 
-  // draw border in color of incidence
-  drawColor = getColor(incidenceBl);
-  rect = new Rect(x + 2, y + 2, vertLineWeight - 4, barHeight * delta - 4);
-  path = new Path();
-  path.addRoundedRect(rect, 2, 2);
-  graphDrawContext.addPath(path);
-  graphDrawContext.setLineWidth(4);
-  graphDrawContext.setStrokeColor(drawColor);
-  graphDrawContext.strokePath();
+    // draw border in color of incidence
+    drawColor = getColor(incidenceBl);
+    rect = new Rect(x + 2, y + 2, vertLineWeight - 4, barHeight * delta - 4);
+    path = new Path();
+    path.addRoundedRect(rect, 2, 2);
+    graphDrawContext.addPath(path);
+    graphDrawContext.setLineWidth(4);
+    graphDrawContext.setStrokeColor(drawColor);
+    graphDrawContext.strokePath();
 
-  // Draw labels
-  const bundesLandRect = new Rect(x, graphBottom - 28, vertLineWeight, 23);
-  drawTextR(graphDrawContext, bundesLand, bundesLandRect, dayColor, Font.mediumSystemFont(20));
-  const bundesLandIncidenceRect = new Rect(x, y - 28, vertLineWeight, 23);
-  drawTextR(graphDrawContext, formatIncidence(incidenceBl), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(20));
+    // Draw labels
+    const bundesLandRect = new Rect(x, graphBottom - 28, vertLineWeight, 23);
+    drawTextR(graphDrawContext, bundesLand, bundesLandRect, dayColor, Font.mediumSystemFont(20));
+    const bundesLandIncidenceRect = new Rect(x, y - 28, vertLineWeight, 23);
+    drawTextR(graphDrawContext, formatIncidence(incidenceBl), bundesLandIncidenceRect, dayColor, Font.mediumSystemFont(20));
+  }
 
   let graphImage = graphDrawContext.getImage();
   leftStack.addImage(graphImage);
