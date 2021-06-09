@@ -6,10 +6,6 @@ Dieses [Scriptable](https://scriptable.app)-Skript erzeugt ein Widget, das den V
 
 Derzeit gibt es das Widget nur in diesem mittelgroßen Format.
 
-## Aktuelles
-
-**Achtung: Zurzeit gibt es ein Problem mit der API für den Impfstatus (vgl. #62) der dazu führt, dass das Widget nicht mehr funktioniert, sondern eine Fehlermeldung liefert (`Error in line 513:48: TypeError: undefined ist not an object (evaluation 'vaccData.data.states')`). Bis dieser Fehler (der auf eine Änderung des Excels des RKI zurückgeht) behoben ist, bitte den Impfstatus ausschalten mit `vac=n`.**
-
 ## Kontakt und Support
 
 * **Homepage:** https://github.com/marcusraitner/COVID-19-Dashboard
