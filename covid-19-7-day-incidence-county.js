@@ -19,7 +19,7 @@
 // * 1.7.0: New feature: Show one decimal (optional); improved rounding; minor visual improvements.
 // * 1.8.0: Complete redesign of incidence graph and some minor adjustments
 
-const version = "1.9.0b1"
+const version = "1.9.0b2"
 
 //------------------------------------------------------------------------------
 // General Options Section
@@ -58,32 +58,79 @@ var detail = 5;
 // show values for the state
 var showBl = true;
 
+// the color theme
+var theme = "original";
+
 // palette found here: https://coolors.co/03071e-370617-6a040f-9d0208-d00000-dc2f02-e85d04-f48c06-faa307-ffba08
-const incidenceColors = [{
-    lower: 0,
-    color: new Color('#b1a7a6', 1)
-  },
-  {
-    lower: 35,
-    color: new Color('#F48C06', 1)
-  },
-  {
-    lower: 50,
-    color: new Color('#E85D04', 1)
-  },
-  {
-    lower: 100,
-    color: new Color('#D00000', 1)
-  },
-  {
-    lower: 165,
-    color: new Color('#6A040F', 1)
-  },
-  {
-    lower: 200,
-    color: new Color('#370617', 1)
-  }
-];
+const incidenceColors = {
+  original: [{
+      lower: 0,
+      color: new Color('#b1a7a6', 1),
+      highlight: new Color("#FFFFFF", .7)
+    },
+    {
+      lower: 35,
+      color: new Color('#F48C06', 1),
+      highlight: new Color("#FFFFFF", .7)
+    },
+    {
+      lower: 50,
+      color: new Color('#E85D04', 1),
+      highlight: new Color("#FFFFFF", .7)
+    },
+    {
+      lower: 100,
+      color: new Color('#D00000', 1),
+      highlight: new Color("#FFFFFF", .7)
+    },
+    {
+      lower: 165,
+      color: new Color('#6A040F', 1),
+      highlight: new Color("#FFFFFF", .7)
+    },
+    {
+      lower: 200,
+      color: new Color('#370617', 1),
+      highlight: new Color("#FFFFFF", .7)
+    }
+  ],
+  rki: [{
+      lower: 0,
+      color: new Color('#ffffff', 1),
+      highlight: new Color('#000000', .5)
+    },
+    {
+      lower: 5,
+      color: new Color('#fcf39f', 1),
+      highlight: new Color('#000000', .5)
+    },
+    {
+      lower: 25,
+      color: new Color('#f9af4d', 1),
+      highlight: new Color("#FFFFFF", .7)
+    },
+    {
+      lower: 50,
+      color: new Color('#ff3d33', 1),
+      highlight: new Color("#FFFFFF", .7)
+    },
+    {
+      lower: 100,
+      color: new Color('#cc0a00', 1),
+      highlight: new Color("#FFFFFF", .7)
+    },
+    {
+      lower: 250,
+      color: new Color('#8c0801', 1),
+      highlight: new Color("#FFFFFF", .7)
+    },
+    {
+      lower: 500,
+      color: new Color('#f202ca', 1),
+      highlight: new Color("#FFFFFF", .7)
+    }
+  ]
+};
 
 // colors for covid beds highlighting
 const colorCovidBed = new Color('#DC2F02', 1);
@@ -284,6 +331,12 @@ async function createWidget(items) {
         } else {
           useFrozen = false;
         }
+      } else if (p[0].trim().toLowerCase() == "theme") {
+        if (p[1].trim().toLowerCase() == "rki") {
+          theme = "rki";
+        } else {
+          theme = "original";
+        }
       } else if (p[0].trim().toLowerCase() == "days") {
         const parsed = Number.parseInt(p[1].trim());
         if (!Number.isNaN(parsed)) {
@@ -330,13 +383,13 @@ async function createWidget(items) {
   // calculate days for showing history
   days = (days - detail - 7) * (spaceBetweenDays / smallSpace) + detail + 9;
 
-if (!showBl && !showGermanyValue) {
-  days += 2;
-}
+  if (!showBl && !showGermanyValue) {
+    days += 2;
+  }
 
-if (!showVaccination) {
-  days += 1;
-}
+  if (!showVaccination) {
+    days += 1;
+  }
 
   if (showIcu) {
     bedsWidth = graphWidth;
@@ -653,6 +706,7 @@ if (!showVaccination) {
     const delta = (cases - min) / diff;
 
     let drawColor;
+    let highlight;
 
     if (dayOfWeek == 0 || dayOfWeek == 6) {
       dayColor = accentColor2;
@@ -661,7 +715,9 @@ if (!showVaccination) {
     }
 
     // Draw bar
-    drawColor = getColor(cases);
+    cols = getColor(cases);
+    drawColor = cols.color;
+    highlight = cols.highlight;
 
     let x0;
     let barWidth;
@@ -682,10 +738,10 @@ if (!showVaccination) {
       const dailyDelta = (dailyValues[i + 1].rel - min) / diff;
       const y = graphBottom - (barHeight * dailyDelta);
       rect = new Rect(x0, y, barWidth, barHeight * dailyDelta);
-      drawRoundedRect(graphDrawContext, rect, new Color("#FFFFFF", .7), 2);
+      drawRoundedRect(graphDrawContext, rect, highlight, 2);
       if (i >= history.length - detail) {
         rect = new Rect(x0, y - 21, barWidth, 20);
-        drawTextR(graphDrawContext, "+" + dailyValues[i + 1].abs, rect, Color.white(), Font.mediumSystemFont(18));
+        drawTextR(graphDrawContext, "+" + dailyValues[i + 1].abs, rect, highlight, Font.mediumSystemFont(18));
       }
     }
 
@@ -715,7 +771,7 @@ if (!showVaccination) {
     drawRoundedRect(graphDrawContext, rect, new Color("#6c757d", 1), 2);
 
     // draw border in color of incidence
-    drawColor = getColor(germanyData.weekIncidence);
+    drawColor = getColor(germanyData.weekIncidence).color;
     rect = new Rect(x + 2, y + 2, vertLineWeight - 4, barHeight * delta - 4);
     let path = new Path();
     path.addRoundedRect(rect, 2, 2);
@@ -750,7 +806,7 @@ if (!showVaccination) {
     drawRoundedRect(graphDrawContext, rect, new Color("#343a40", 1), 2);
 
     // draw border in color of incidence
-    drawColor = getColor(incidenceBl);
+    drawColor = getColor(incidenceBl).color;
     rect = new Rect(x + 2, y + 2, vertLineWeight - 4, barHeight * delta - 4);
     path = new Path();
     path.addRoundedRect(rect, 2, 2);
@@ -915,17 +971,13 @@ function drawRoundedRect(drawContext, rect, color, radius) {
 }
 
 function getColor(value) {
-  let col = incidenceColors[0].color;
+  let colors = incidenceColors[theme];
+  let i;
 
-  for (i = 1; i < incidenceColors.length; i++) {
-    if (value >= incidenceColors[i].lower) {
-      col = incidenceColors[i].color;
-    } else {
-      break
-    }
+  for (i = 1; i < colors.length && colors[i].lower <= value; i++) {
   }
 
-  return col;
+  return colors[i-1];
 }
 
 function roundIncidence(incidence) {
