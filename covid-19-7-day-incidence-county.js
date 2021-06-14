@@ -19,7 +19,7 @@
 // * 1.7.0: New feature: Show one decimal (optional); improved rounding; minor visual improvements.
 // * 1.8.0: Complete redesign of incidence graph and some minor adjustments
 
-const version = "1.9.0b2"
+const version = "1.9.0b3"
 
 //------------------------------------------------------------------------------
 // General Options Section
@@ -733,14 +733,17 @@ async function createWidget(items) {
     let rect = new Rect(x0, graphBottom - (barHeight * delta), barWidth, barHeight * delta);
     drawRoundedRect(graphDrawContext, rect, drawColor, 2);
 
+    let y = graphBottom;
+
     // draw daily cases (if set)
     if (showDaily && !useFrozen && i < history.length - 1) {
       const dailyDelta = (dailyValues[i + 1].rel - min) / diff;
-      const y = graphBottom - (barHeight * dailyDelta);
+      y -= barHeight * dailyDelta;
       rect = new Rect(x0, y, barWidth, barHeight * dailyDelta);
       drawRoundedRect(graphDrawContext, rect, highlight, 2);
       if (i >= history.length - detail) {
-        rect = new Rect(x0, y - 21, barWidth, 20);
+        y -= 21;
+        rect = new Rect(x0, y, barWidth, 20);
         drawTextR(graphDrawContext, "+" + dailyValues[i + 1].abs, rect, highlight, Font.mediumSystemFont(18));
       }
     }
@@ -752,7 +755,11 @@ async function createWidget(items) {
         drawTextR(graphDrawContext, day, dayRect, dayColor, Font.mediumSystemFont(20));
       }
     } else {
-      const casesRect = new Rect(x0, graphBottom - (barHeight * delta) - 28, barWidth, 23);
+      let y1 = graphBottom - (barHeight * delta) - 28 + 23;
+      if (y1 > y) {
+        y1 = y;
+      }
+      const casesRect = new Rect(x0, y1 - 23, barWidth, 23);
       drawTextR(graphDrawContext, formatIncidence(cases), casesRect, dayColor, Font.mediumSystemFont(20));
       const dayRect = new Rect(x0, graphBottom + 1, barWidth, 23);
       drawTextR(graphDrawContext, day, dayRect, dayColor, Font.mediumSystemFont(20));
