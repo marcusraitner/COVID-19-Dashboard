@@ -791,7 +791,7 @@ async function createWidget(items) {
       let rRect = new Rect(x - 20, graphBottom + 1, vertLineWeight + 20, 23);
       drawTextR(graphDrawContext, "R:" + Intl.NumberFormat('de-DE', {
         minimumFractionDigits: 2
-      }).format(germanyData.r.value), rRect, dayColor, Font.mediumSystemFont(20));
+      }).format(germanyData.r.rValue7Days.value), rRect, dayColor, Font.mediumSystemFont(20));
     }
   }
 
