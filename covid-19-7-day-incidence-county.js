@@ -18,8 +18,9 @@
 // * 1.6.0: New feature: Use frozen values of RKI
 // * 1.7.0: New feature: Show one decimal (optional); improved rounding; minor visual improvements.
 // * 1.8.0: Complete redesign of incidence graph and some minor adjustments
+// * 1.9.0: Themes and new parameter bl
 
-const version = "1.9.0b3"
+const version = "1.9.0"
 
 //------------------------------------------------------------------------------
 // General Options Section
