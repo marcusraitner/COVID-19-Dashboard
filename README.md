@@ -1,8 +1,12 @@
 # COVID-19-Dashboard
 
-Dieses [Scriptable](https://scriptable.app)-Skript erzeugt ein Widget, das den Verlauf der 7-Tage-Inzidenz und die Auslastung der Intensivbetten am aktuellen Standort innerhalb Deutschlands anzeigt. Zusätzlich angezeigt wird der aktuelle Wert der 7-Tage-Inzidenz des zugehörigen Bundeslandes und der Impfstatus des Bundeslandes. Optional (Paramter `de=y`) kann auch der Inzidenzwert von Deutschland und der R-Wert für Deutschland angezeigt werden. Hier ein Beispiel für den Landkreis Ebersberg:
+Dieses [Scriptable](https://scriptable.app)-Skript erzeugt ein Widget, das den Verlauf der 7-Tage-Inzidenz und die Auslastung der Intensivbetten am aktuellen Standort innerhalb Deutschlands anzeigt. Zusätzlich angezeigt wird der aktuelle Wert der 7-Tage-Inzidenz des zugehörigen Bundeslandes und der Impfstatus des Bundeslandes. Optional (Paramter `de=y`) kann auch der Inzidenzwert von Deutschland und der R-Wert für Deutschland angezeigt werden. Hier ein Beispiel für den Landkreis Ebersberg im neuen RKI-Theme (`theme=rki`):
 
-![IMG_1183](https://user-images.githubusercontent.com/65543240/120902681-fcb7a600-c641-11eb-8a2d-e98d061166b8.jpeg)
+![IMG_1370](https://user-images.githubusercontent.com/65543240/127213923-be2eb63b-f6e3-4625-af56-620b84653a88.jpeg)
+
+Oder mit mehr Tagen im Detail im klassischen Theme
+
+![IMG_1371](https://user-images.githubusercontent.com/65543240/127214131-7862021f-b99a-4341-824b-cebe4d97f73a.jpeg)
 
 Derzeit gibt es das Widget nur in diesem mittelgroßen Format.
 
@@ -16,6 +20,11 @@ Für Ideen und Fehlermeldungen bitte ein [Issue erstellen](https://github.com/ma
 ☕️ Einen Kaffee ausgeben: https://ko-fi.com/marcusraitner
 
 ## Changelog
+
+### v1.9.0
+* Themes: Mit dem Parameter `theme=(original|rki)` lässt sich nun ein neues Theme wählen (`theme=rki`) das Farben und Schwellwerte des des RKI-Dashboards verwendet. ([#49](https://github.com/marcusraitner/COVID-19-Dashboard/issues/49))
+* Über den Parameter `bl=(y|n)` kann nun auch das Bundesland ausgeblendet werden; sinnvoll z.B. für Hamburg. ([#61](https://github.com/marcusraitner/COVID-19-Dashboard/issues/61))
+* Bugfix für R-Wert aufgrund Änderung der API. Verwendet wird nun auch der aussagekräftigere 7-Tages-Schätzer. ([#75](https://github.com/marcusraitner/COVID-19-Dashboard/issues/75))
 
 ### v1.8.0
 * Die Darstellung der Inzidenzwerte wurde komplett überarbeitet und bietet jetzt detaillierte Informationen für die letzten Tage (konfigurierbar über den Parameter `days`) und darüberhinaus den Verlauf der Inzidenz mit schmalen Balken ([#48](https://github.com/marcusraitner/COVID-19-Dashboard/issues/48)).
@@ -56,6 +65,7 @@ Das Widget erlaubt folgende Parameter in beliebiger Reihenfolge mit Semikolon ("
 
 * `loc=<latitude,longitude>`: z.B. `loc=48.34,10.78` (aus Gründen der Kompatibilität kann "loc=" auch entfallen. Default: aktueller Ort.
 * `de=(y|n)`: bestimmt, ob die Inzidenz für Deutschland angezeigt werden soll (y) oder nicht (n). Default: `de=n`
+* `bl=(y|n)`: bestimmt, ob die Inzidenz für das Bundesland angezeigt wird. Default `bl=y` 
 * `rval=(y|n)`: bestimmt, ob bei der Inzidenz für Deutschland auch der R-Wert angezeigt werden soll (y) oder nicht (n). Default: `rval=y`
 * `vac=(y|n)`: bestimmt, ob der aktuelle Impfstatus für den ausgewählten Landkreis angezeigt werden soll (y) oder nicht (n). Default: `vac=y`
 * `beds=(y|n)`: bestimmt, ob die aktuelle Auslastung der Intensivbetten angezeigt werden soll (y) oder nicht (n). Default: `beds=y`
