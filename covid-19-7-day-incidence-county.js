@@ -618,7 +618,7 @@ async function createWidget(items) {
 
     let vaccinationBoosterRect = new Rect(0, (1 - quoteBooster / 100) * vaccinationBottom, vaccinationWidth, vaccinationBottom * quoteBooster / 100);
     drawRoundedRect(drawContext, vaccinationBoosterRect, vaccinationBoosterColor, 4);
-    vaccinationTextRect = new Rect(10, (1 - quoteBooster / 100) * vaccinationBottom - 26, vaccinationWidth, 22);
+    vaccinationTextRect = new Rect(10, (1 - quoteBooster / 100) * vaccinationBottom, vaccinationWidth, 22);
     drawTextR(drawContext, quoteBooster + ' %', vaccinationTextRect, Color.white(), Font.regularSystemFont(22));
 
     drawLine(drawContext, new Point(1, 0), new Point(1, vaccinationHeight), 2, Color.lightGray());
