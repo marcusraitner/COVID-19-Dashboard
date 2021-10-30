@@ -19,8 +19,9 @@
 // * 1.7.0: New feature: Show one decimal (optional); improved rounding; minor visual improvements.
 // * 1.8.0: Complete redesign of incidence graph and some minor adjustments
 // * 1.9.0: Themes and new parameter bl
+// * 1.10.0: Added hospitalization
 
-const version = "1.9.0"
+const version = "1.10.0"
 
 //------------------------------------------------------------------------------
 // General Options Section
@@ -197,6 +198,8 @@ const vaccUrl = `https://api.corona-zahlen.org/vaccinations`;
 const germanyUrl = `https://api.corona-zahlen.org/germany`;
 
 const apiUrlDistricts = `https://api.corona-zahlen.org/districts/`;
+
+const apiUrlHospitalization = `https://api.corona-zahlen.org/states`;
 
 const apiUrlDataFrozen = (ags, days) => `https://api.corona-zahlen.org/districts/${ encodeURIComponent( ags ) }/history/frozen-incidence/${ encodeURIComponent( days ) }`;
 
@@ -593,6 +596,7 @@ async function createWidget(items) {
 
     let rightStack = stack.addStack();
     rightStack.setPadding(0, 0, 0, 0);
+    rightStack.layoutVertically();
     rightStack.backgroundGradient = vaccinationGradient;
     rightStack.cornerRadius = 4;
 
@@ -623,7 +627,46 @@ async function createWidget(items) {
 
     drawLine(drawContext, new Point(1, 0), new Point(1, vaccinationHeight), 2, Color.lightGray());
 
+    // Get hospitalization Datenstand
+
+    if (debug) {
+      console.log("Getting hospitalization data: " + apiUrlHospitalization);
+    }
+
+    const hospitalizationData = await new Request(apiUrlHospitalization).loadJSON();
+
+    if (debug) {
+      console.log(hospitalizationData);
+    }
+
+    if (!hospitalizationData) {
+      list.addText('Keine Daten für Bundesland.');
+      return list;
+    }
+
+    let hospitalizationCases7Days = hospitalizationData.data[bundesLand].hospitalization.cases7Days;
+    let hospitalizationIncidence7Days = hospitalizationData.data[bundesLand].hospitalization.incidence7Days;
+
+    let hospitalizationHeight = 100;
+    let hospitalizationTop = vaccinationBottom - hospitalizationHeight;
+
+    let hospitalizationRect = new Rect(0, hospitalizationTop, vaccinationWidth, hospitalizationHeight);
+    drawRoundedRect(drawContext, hospitalizationRect, new Color('#CBAE11'), 4);
+
+    let hospitalizationTextRect = new Rect(5, hospitalizationTop + 5, vaccinationWidth - 10, 22);
+    drawContext.setTextAlignedCenter();
+    drawTextR(drawContext, hospitalizationIncidence7Days, hospitalizationTextRect, Color.white(), Font.mediumSystemFont(22));
+
+    hospitalizationTextRect = new Rect(5, hospitalizationTop + 30, vaccinationWidth - 10, 22);
+    drawContext.setTextAlignedCenter();
+    drawTextR(drawContext, hospitalizationCases7Days, hospitalizationTextRect, Color.white(), Font.mediumSystemFont(22));
+
+    hospitalizationTextRect = new Rect(10, hospitalizationTop + 52, vaccinationWidth - 10, 40);
+    drawContext.setTextAlignedLeft();
+    drawTextR(drawContext, '🚑', hospitalizationTextRect, Color.white(), Font.mediumSystemFont(36));
+
     rightStack.addImage(drawContext.getImage());
+
   } else {
     leftStack.setPadding(7, 7, 2, 7);
   }
