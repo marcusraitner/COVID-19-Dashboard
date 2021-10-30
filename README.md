@@ -2,11 +2,11 @@
 
 Dieses [Scriptable](https://scriptable.app)-Skript erzeugt ein Widget, das den Verlauf der 7-Tage-Inzidenz und die Auslastung der Intensivbetten am aktuellen Standort innerhalb Deutschlands anzeigt. Zusätzlich angezeigt wird der aktuelle Wert der 7-Tage-Inzidenz des zugehörigen Bundeslandes und der Impfstatus des Bundeslandes. Optional (Paramter `de=y`) kann auch der Inzidenzwert von Deutschland und der R-Wert für Deutschland angezeigt werden. Hier ein Beispiel für den Landkreis Ebersberg im neuen RKI-Theme (`theme=rki`):
 
-![IMG_1370](https://user-images.githubusercontent.com/65543240/127213923-be2eb63b-f6e3-4625-af56-620b84653a88.jpeg)
+![IMG_0117](https://user-images.githubusercontent.com/65543240/139554919-91fceb4f-990b-4836-8b5f-155cfea307d8.jpeg)
 
 Oder mit mehr Tagen im Detail im klassischen Theme
 
-![IMG_1371](https://user-images.githubusercontent.com/65543240/127214131-7862021f-b99a-4341-824b-cebe4d97f73a.jpeg)
+![IMG_0118](https://user-images.githubusercontent.com/65543240/139554959-34c18202-df8b-4dfe-8a2b-8e51d6e92cc8.jpeg)
 
 Derzeit gibt es das Widget nur in diesem mittelgroßen Format.
 
@@ -20,6 +20,9 @@ Für Ideen und Fehlermeldungen bitte ein [Issue erstellen](https://github.com/ma
 ☕️ Einen Kaffee ausgeben: https://ko-fi.com/marcusraitner
 
 ## Changelog
+
+### v1.10.0
+* Hospitalisierungswerte: Zusätzlich zur Impfquote werden im rechten unteren Eck des Widgets nun die 7-Tages-Hospitalisierungsinzidenz und der Absolutwert der hospitalisierten Fälle der letzten sieben Tage des aktuellen Bundeslandes angezeigt.
 
 ### v1.9.0
 * Themes: Mit dem Parameter `theme=(original|rki)` lässt sich nun ein neues Theme wählen (`theme=rki`) das Farben und Schwellwerte des des RKI-Dashboards verwendet. ([#49](https://github.com/marcusraitner/COVID-19-Dashboard/issues/49))
@@ -55,6 +58,11 @@ Der gesamte Balken repräsentiert _alle_ verfügbaren Betten. Der rechte grüne 
 
 Beim Impfstatus werden zwei Werte angezeigt (für das Bundesland; auf Landkreisebene gibt es die Daten nicht): Der Anteil der einmalig geimpften und der Anteil der zweimalig geimpften Personen.
 
+### Hospitalisierung
+Im rechten unteren Eck des Widgets wird die 7-Tages-Hospitalisierungsinzidenz und der Absolutwert der hospitalisierten Fälle der letzten sieben Tage des aktuellen Bundeslandes angezeigt.
+
+![IMG_0116](https://user-images.githubusercontent.com/65543240/139554808-43ba219e-c660-44cb-b4af-81c202985e27.jpeg)
+
 ### Links zu Coronaregeln
 
 Ein Klick auf die Überschrift bzw. den Landkreis öffnet die Coronaregeln des jeweiligen Bundeslandes (Quelle der Links: [Übersichtsseite der Bundesregierung](https://www.bundesregierung.de/breg-de/themen/coronavirus/corona-bundeslaender-1745198))
@@ -82,6 +90,7 @@ Das Widget erlaubt folgende Parameter in beliebiger Reihenfolge mit Semikolon ("
 * **Impfstatus:** Daten des RKI via https://api.corona-zahlen.org/
 * **Deutschland:** Daten des RKI via https://api.corona-zahlen.org/
 * **"Frozen"-Werte:** Daten des RKI via https://api.corona-zahlen.org/
+* **Hospitalisierung:** Daten des [RKI](https://github.com/robert-koch-institut/COVID-19-Hospitalisierungen_in_Deutschland) via https://api.corona-zahlen.org/
 
 ## Berechnung
 
