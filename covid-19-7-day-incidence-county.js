@@ -655,7 +655,7 @@ async function createWidget(items) {
 
     let hospitalizationTextRect = new Rect(5, hospitalizationTop + 5, vaccinationWidth - 10, 22);
     drawContext.setTextAlignedCenter();
-    drawTextR(drawContext, hospitalizationIncidence7Days, hospitalizationTextRect, Color.white(), Font.mediumSystemFont(22));
+    drawTextR(drawContext, Intl.NumberFormat('de-DE', { minimumFractionDigits: 2 }).format(hospitalizationIncidence7Days), hospitalizationTextRect, Color.white(), Font.mediumSystemFont(22));
 
     hospitalizationTextRect = new Rect(5, hospitalizationTop + 30, vaccinationWidth - 10, 22);
     drawContext.setTextAlignedCenter();
