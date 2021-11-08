@@ -19,8 +19,9 @@
 // * 1.8.0: Complete redesign of incidence graph and some minor adjustments
 // * 1.9.0: Themes and new parameter bl
 // * 1.10.0: Added hospitalization
+// * 1.10.1: Added toggle for hospitalization
 
-const version = "1.10.0"
+const version = "1.10.1"
 
 //------------------------------------------------------------------------------
 // General Options Section
@@ -63,7 +64,7 @@ var showBl = true;
 var theme = "original";
 
 // Show Hospitalization
-var showHospitalization = false;
+var showHospitalization = true;
 
 // palette found here: https://coolors.co/03071e-370617-6a040f-9d0208-d00000-dc2f02-e85d04-f48c06-faa307-ffba08
 const incidenceColors = {
