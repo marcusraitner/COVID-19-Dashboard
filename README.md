@@ -21,6 +21,9 @@ Für Ideen und Fehlermeldungen bitte ein [Issue erstellen](https://github.com/ma
 
 ## Changelog
 
+### v1.10.1
+* Hospitalisierungswerte können mittels Parameter `hosp=(y|n)` ein- bzw. ausgeblendet werden (nur zusammen mit `vacc=y` möglich)
+
 ### v1.10.0
 * Hospitalisierungswerte: Zusätzlich zur Impfquote werden im rechten unteren Eck des Widgets nun die 7-Tages-Hospitalisierungsinzidenz und der Absolutwert der hospitalisierten Fälle der letzten sieben Tage des aktuellen Bundeslandes angezeigt.
 
@@ -73,7 +76,7 @@ Das Widget erlaubt folgende Parameter in beliebiger Reihenfolge mit Semikolon ("
 
 * `loc=<latitude,longitude>`: z.B. `loc=48.34,10.78` (aus Gründen der Kompatibilität kann "loc=" auch entfallen. Default: aktueller Ort.
 * `de=(y|n)`: bestimmt, ob die Inzidenz für Deutschland angezeigt werden soll (y) oder nicht (n). Default: `de=n`
-* `bl=(y|n)`: bestimmt, ob die Inzidenz für das Bundesland angezeigt wird. Default `bl=y` 
+* `bl=(y|n)`: bestimmt, ob die Inzidenz für das Bundesland angezeigt wird. Default `bl=y`
 * `rval=(y|n)`: bestimmt, ob bei der Inzidenz für Deutschland auch der R-Wert angezeigt werden soll (y) oder nicht (n). Default: `rval=y`
 * `vac=(y|n)`: bestimmt, ob der aktuelle Impfstatus für den ausgewählten Landkreis angezeigt werden soll (y) oder nicht (n). Default: `vac=y`
 * `beds=(y|n)`: bestimmt, ob die aktuelle Auslastung der Intensivbetten angezeigt werden soll (y) oder nicht (n). Default: `beds=y`

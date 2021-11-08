@@ -4,7 +4,6 @@
 // Licence: GNU GENERAL PUBLIC LICENSE, Version 3, 29 June 2007
 // Author: Marcus Raitner (https://fuehrung-erfahren.de)
 // Source: https://github.com/marcusraitner/COVID-19-Dashboard
-// Version: 1.8.0b
 // ## Changelog
 // * 1.0.1: Correction of layout of label for covid-beds
 // * 1.0.2: Bug-Fix for Saar-Pfalz-Kreis (using GEN instead of county for join)
@@ -60,8 +59,11 @@ var detail = 5;
 // show values for the state
 var showBl = true;
 
-// the color theme
+// The color theme
 var theme = "original";
+
+// Show Hospitalization
+var showHospitalization = false;
 
 // palette found here: https://coolors.co/03071e-370617-6a040f-9d0208-d00000-dc2f02-e85d04-f48c06-faa307-ffba08
 const incidenceColors = {
@@ -346,6 +348,12 @@ async function createWidget(items) {
         if (!Number.isNaN(parsed)) {
           detail = parsed;
         }
+      } else if (p[0].trim().toLowerCase() == "hosp") {
+        if (p[1].trim().toLowerCase() == "y") {
+          showHospitalization = true;
+        } else {
+          showHospitalization = false;
+        }
       } else if (p.length == 1) {
         // for compatability with old syntax
         const fixedCoordinates = p[0].split(',').map(parseFloat);
@@ -628,42 +636,45 @@ async function createWidget(items) {
     drawLine(drawContext, new Point(1, 0), new Point(1, vaccinationHeight), 2, Color.lightGray());
 
     // Get hospitalization Datenstand
+    if (showHospitalization) {
+      if (debug) {
+        console.log("Getting hospitalization data: " + apiUrlHospitalization);
+      }
 
-    if (debug) {
-      console.log("Getting hospitalization data: " + apiUrlHospitalization);
+      const hospitalizationData = await new Request(apiUrlHospitalization).loadJSON();
+
+      if (debug) {
+        console.log(hospitalizationData);
+      }
+
+      if (!hospitalizationData) {
+        list.addText('Keine Hospitalisierungsdaten.');
+        return list;
+      }
+
+      let hospitalizationCases7Days = hospitalizationData.data[bundesLand].hospitalization.cases7Days;
+      let hospitalizationIncidence7Days = hospitalizationData.data[bundesLand].hospitalization.incidence7Days;
+
+      let hospitalizationHeight = 100;
+      let hospitalizationTop = vaccinationBottom - hospitalizationHeight;
+
+      let hospitalizationRect = new Rect(0, hospitalizationTop, vaccinationWidth, hospitalizationHeight);
+      drawRoundedRect(drawContext, hospitalizationRect, new Color('#CBAE11'), 4);
+
+      let hospitalizationTextRect = new Rect(5, hospitalizationTop + 5, vaccinationWidth - 10, 22);
+      drawContext.setTextAlignedCenter();
+      drawTextR(drawContext, Intl.NumberFormat('de-DE', {
+        minimumFractionDigits: 2
+      }).format(hospitalizationIncidence7Days), hospitalizationTextRect, Color.white(), Font.mediumSystemFont(22));
+
+      hospitalizationTextRect = new Rect(5, hospitalizationTop + 30, vaccinationWidth - 10, 22);
+      drawContext.setTextAlignedCenter();
+      drawTextR(drawContext, hospitalizationCases7Days, hospitalizationTextRect, Color.white(), Font.mediumSystemFont(22));
+
+      hospitalizationTextRect = new Rect(10, hospitalizationTop + 52, vaccinationWidth - 10, 40);
+      drawContext.setTextAlignedLeft();
+      drawTextR(drawContext, '🚑', hospitalizationTextRect, Color.white(), Font.mediumSystemFont(36));
     }
-
-    const hospitalizationData = await new Request(apiUrlHospitalization).loadJSON();
-
-    if (debug) {
-      console.log(hospitalizationData);
-    }
-
-    if (!hospitalizationData) {
-      list.addText('Keine Daten für Bundesland.');
-      return list;
-    }
-
-    let hospitalizationCases7Days = hospitalizationData.data[bundesLand].hospitalization.cases7Days;
-    let hospitalizationIncidence7Days = hospitalizationData.data[bundesLand].hospitalization.incidence7Days;
-
-    let hospitalizationHeight = 100;
-    let hospitalizationTop = vaccinationBottom - hospitalizationHeight;
-
-    let hospitalizationRect = new Rect(0, hospitalizationTop, vaccinationWidth, hospitalizationHeight);
-    drawRoundedRect(drawContext, hospitalizationRect, new Color('#CBAE11'), 4);
-
-    let hospitalizationTextRect = new Rect(5, hospitalizationTop + 5, vaccinationWidth - 10, 22);
-    drawContext.setTextAlignedCenter();
-    drawTextR(drawContext, Intl.NumberFormat('de-DE', { minimumFractionDigits: 2 }).format(hospitalizationIncidence7Days), hospitalizationTextRect, Color.white(), Font.mediumSystemFont(22));
-
-    hospitalizationTextRect = new Rect(5, hospitalizationTop + 30, vaccinationWidth - 10, 22);
-    drawContext.setTextAlignedCenter();
-    drawTextR(drawContext, hospitalizationCases7Days, hospitalizationTextRect, Color.white(), Font.mediumSystemFont(22));
-
-    hospitalizationTextRect = new Rect(10, hospitalizationTop + 52, vaccinationWidth - 10, 40);
-    drawContext.setTextAlignedLeft();
-    drawTextR(drawContext, '🚑', hospitalizationTextRect, Color.white(), Font.mediumSystemFont(36));
 
     rightStack.addImage(drawContext.getImage());
 
@@ -1025,10 +1036,9 @@ function getColor(value) {
   let colors = incidenceColors[theme];
   let i;
 
-  for (i = 1; i < colors.length && colors[i].lower <= value; i++) {
-  }
+  for (i = 1; i < colors.length && colors[i].lower <= value; i++) {}
 
-  return colors[i-1];
+  return colors[i - 1];
 }
 
 function roundIncidence(incidence) {
