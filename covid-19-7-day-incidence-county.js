@@ -20,8 +20,9 @@
 // * 1.9.0: Themes and new parameter bl
 // * 1.10.0: Added hospitalization
 // * 1.10.1: Added toggle for hospitalization
+// * 1.10.2: New color in RKI Theme for incidence > 1.000 (and color for 500 adjusted to RKI Dashboard)
 
-const version = "1.10.1"
+const version = "1.10.2"
 
 //------------------------------------------------------------------------------
 // General Options Section
@@ -131,7 +132,12 @@ const incidenceColors = {
     },
     {
       lower: 500,
-      color: new Color('#f202ca', 1),
+      color: new Color('#C82B81', 1),
+      highlight: new Color("#FFFFFF", .7)
+    },
+    {
+      lower: 1000,
+      color: new Color('#6E1472', 1),
       highlight: new Color("#FFFFFF", .7)
     }
   ]
