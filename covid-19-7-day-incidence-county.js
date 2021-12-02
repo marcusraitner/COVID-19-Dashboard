@@ -21,8 +21,9 @@
 // * 1.10.0: Added hospitalization
 // * 1.10.1: Added toggle for hospitalization
 // * 1.10.2: New color in RKI Theme for incidence > 1.000 (and color for 500 adjusted to RKI Dashboard)
+// * 1.10.3: Some minor display adjustments
 
-const version = "1.10.2"
+const version = "1.10.3"
 
 //------------------------------------------------------------------------------
 // General Options Section
@@ -1054,9 +1055,15 @@ function roundIncidence(incidence) {
 }
 
 function formatIncidence(incidence) {
-  return Intl.NumberFormat('de-DE', {
-    minimumFractionDigits: 1
-  }).format(incidence);
+  if (incidence <= 100) {
+    return Intl.NumberFormat('de-DE', {
+      minimumFractionDigits: 1
+    }).format(incidence);
+  } else {
+    return Intl.NumberFormat('de-DE', {
+      maximumFractionDigits: 0
+    }).format(incidence);
+  }
 }
 
 function isToday(date) {
