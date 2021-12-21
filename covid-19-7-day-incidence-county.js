@@ -1014,7 +1014,7 @@ async function createWidget(items) {
   let statusStack = leftStack.addStack();
   statusStack.layoutHorizontally();
   statusStack.setPadding(0, 0, 0, 0);
-  // statusStack.addSpacer();
+  statusStack.addSpacer();
   let statusText = statusStack.addText("Datenstand: " + new Intl.DateTimeFormat('de-DE', {
     year: 'numeric',
     month: 'numeric',
