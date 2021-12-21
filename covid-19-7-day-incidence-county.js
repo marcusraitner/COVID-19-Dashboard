@@ -1024,10 +1024,7 @@ async function createWidget(items) {
   }).format(updated) + " // Version: " + version);
   statusText.font = Font.lightSystemFont(8);
   statusText.textColor = Color.gray();
-  if (!showVaccination) {
-    statusStack.addSpacer();
-  }
-
+  statusStack.addSpacer();
   return list;
 }
 
