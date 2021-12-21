@@ -2,7 +2,7 @@
 
 Dieses [Scriptable](https://scriptable.app)-Skript erzeugt ein Widget, das den Verlauf der 7-Tage-Inzidenz und die Auslastung der Intensivbetten am aktuellen Standort innerhalb Deutschlands anzeigt. Zusätzlich angezeigt wird der aktuelle Wert der 7-Tage-Inzidenz des zugehörigen Bundeslandes und der Impfstatus des Bundeslandes. Optional (Paramter `de=y`) kann auch der Inzidenzwert von Deutschland und der R-Wert für Deutschland angezeigt werden. Hier ein Beispiel für den Landkreis Ebersberg im neuen RKI-Theme (`theme=rki`):
 
-![IMG_0356](https://user-images.githubusercontent.com/65543240/146950475-c26beccc-c81a-49f4-912c-5bcc13b53b1a.jpeg)
+![IMG_0362](https://user-images.githubusercontent.com/65543240/146953815-0cb7181d-89b8-42ec-91c5-b9714bd4b49d.jpeg)
 
 Derzeit gibt es das Widget nur in diesem mittelgroßen Format.
 
@@ -17,8 +17,12 @@ Für Ideen und Fehlermeldungen bitte ein [Issue erstellen](https://github.com/ma
 
 ## Changelog
 
+### v1.11.0
+* Anzeige Booster-Impfungen ([#98](https://github.com/marcusraitner/COVID-19-Dashboard/issues/98)).
+* Anzeige Hospitalisierung verschoben, um Platz für die Booster-Impfungen zu schaffen.
+
 ### v1.10.1
-* Hospitalisierungswerte können mittels Parameter `hosp=(y|n)` ein- bzw. ausgeblendet werden (nur zusammen mit `vacc=y` möglich)
+* Hospitalisierungswerte können mittels Parameter `hosp=(y|n)` ein- bzw. ausgeblendet werden (nur zusammen mit `beds=y` möglich)
 
 ### v1.10.0
 * Hospitalisierungswerte: Zusätzlich zur Impfquote werden im rechten unteren Eck des Widgets nun die 7-Tages-Hospitalisierungsinzidenz und der Absolutwert der hospitalisierten Fälle der letzten sieben Tage des aktuellen Bundeslandes angezeigt.
@@ -30,7 +34,7 @@ Für Ideen und Fehlermeldungen bitte ein [Issue erstellen](https://github.com/ma
 
 ### v1.8.0
 * Die Darstellung der Inzidenzwerte wurde komplett überarbeitet und bietet jetzt detaillierte Informationen für die letzten Tage (konfigurierbar über den Parameter `days`) und darüberhinaus den Verlauf der Inzidenz mit schmalen Balken ([#48](https://github.com/marcusraitner/COVID-19-Dashboard/issues/48)).
-* Die Darstellung der Inzidenzwerte wurde optimiert, dass der zur Verfügung stehende Platz (insbes. mit `icu=n` oder `vac=n`) besser genutzt wird ([#55](https://github.com/marcusraitner/COVID-19-Dashboard/issues/55)).  
+* Die Darstellung der Inzidenzwerte wurde optimiert, dass der zur Verfügung stehende Platz (insbes. mit `beds=n` oder `vac=n`) besser genutzt wird ([#55](https://github.com/marcusraitner/COVID-19-Dashboard/issues/55)).  
 * In der Statuszeile ganz unten wird die Aktualität des Datenstands (der Inzidenzwerte) und die Version des Skripts angezeigt ([#54](https://github.com/marcusraitner/COVID-19-Dashboard/issues/54) und [#37](https://github.com/marcusraitner/COVID-19-Dashboard/issues/37)).
 * Für den Fall, dass morgens der Wert des aktuellen Tages (bei `frozen=y`) fehlt, wird er aus der RKI-Schnittstelle ergänzt ([#45](https://github.com/marcusraitner/COVID-19-Dashboard/issues/45)).
 * Die Paramter `rki=y` und `decimal=y` sind entfallen ([#51](https://github.com/marcusraitner/COVID-19-Dashboard/issues/51)).
@@ -60,7 +64,7 @@ Beim Impfstatus werden zwei Werte angezeigt (für das Bundesland; auf Landkreise
 ### Hospitalisierung
 Rechts neben den Balken der Intensivbetten wird die 7-Tages-Hospitalisierungsinzidenz und der Absolutwert der hospitalisierten Fälle der letzten sieben Tage des aktuellen Bundeslandes angezeigt.
 
-![IMG_0356](https://user-images.githubusercontent.com/65543240/146950475-c26beccc-c81a-49f4-912c-5bcc13b53b1a.jpeg)
+![IMG_0363](https://user-images.githubusercontent.com/65543240/146954051-6ce4b42b-69c9-4344-9f9f-2a65edbbbb85.jpeg)
 
 ### Links zu Coronaregeln
 
@@ -79,6 +83,7 @@ Das Widget erlaubt folgende Parameter in beliebiger Reihenfolge mit Semikolon ("
 * `daily=(y|n)`: bestimmt, ob der Beitrag des Tages zur 7-Tages-Inzidenz angezeigt werden soll. Default: `daily=y`
 * `frozen=(y|n)`: bestimmt, ob die "eingefrorenen" Werte des RKI verwendet werden sollen (s. Berechnung). Default: `frozen=n`
 * `days=[0…10]`: legt fest, wie viele Tage detailliert angezeigt werden sollen. Die Anzahl der maximal möglichen Tage wird ggf. automatisch beschränkt, falls `de=y` oder `vac=y`. Default: `days=5`
+* `hosp=(y|n)`: legt fest, ob die Hospitalisierungswerte (absolut und 7-Tage-Inzidenz) des Bundeslands angezeigt werden (nur bei `beds=y` möglich)
 * `theme=(original|rki)`: Legt die Farben für die Inzidenzwerte fest. Default: `theme=original`
 
 ## Datenquellen
