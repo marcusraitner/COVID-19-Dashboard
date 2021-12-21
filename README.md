@@ -2,11 +2,7 @@
 
 Dieses [Scriptable](https://scriptable.app)-Skript erzeugt ein Widget, das den Verlauf der 7-Tage-Inzidenz und die Auslastung der Intensivbetten am aktuellen Standort innerhalb Deutschlands anzeigt. Zusätzlich angezeigt wird der aktuelle Wert der 7-Tage-Inzidenz des zugehörigen Bundeslandes und der Impfstatus des Bundeslandes. Optional (Paramter `de=y`) kann auch der Inzidenzwert von Deutschland und der R-Wert für Deutschland angezeigt werden. Hier ein Beispiel für den Landkreis Ebersberg im neuen RKI-Theme (`theme=rki`):
 
-![IMG_0117](https://user-images.githubusercontent.com/65543240/139554919-91fceb4f-990b-4836-8b5f-155cfea307d8.jpeg)
-
-Oder mit mehr Tagen im Detail im klassischen Theme
-
-![IMG_0118](https://user-images.githubusercontent.com/65543240/139554959-34c18202-df8b-4dfe-8a2b-8e51d6e92cc8.jpeg)
+![IMG_0356](https://user-images.githubusercontent.com/65543240/146950475-c26beccc-c81a-49f4-912c-5bcc13b53b1a.jpeg)
 
 Derzeit gibt es das Widget nur in diesem mittelgroßen Format.
 
@@ -62,9 +58,9 @@ Der gesamte Balken repräsentiert _alle_ verfügbaren Betten. Der rechte grüne 
 Beim Impfstatus werden zwei Werte angezeigt (für das Bundesland; auf Landkreisebene gibt es die Daten nicht): Der Anteil der einmalig geimpften und der Anteil der zweimalig geimpften Personen.
 
 ### Hospitalisierung
-Im rechten unteren Eck des Widgets wird die 7-Tages-Hospitalisierungsinzidenz und der Absolutwert der hospitalisierten Fälle der letzten sieben Tage des aktuellen Bundeslandes angezeigt.
+Rechts neben den Balken der Intensivbetten wird die 7-Tages-Hospitalisierungsinzidenz und der Absolutwert der hospitalisierten Fälle der letzten sieben Tage des aktuellen Bundeslandes angezeigt.
 
-![IMG_0116](https://user-images.githubusercontent.com/65543240/139554808-43ba219e-c660-44cb-b4af-81c202985e27.jpeg)
+![IMG_0356](https://user-images.githubusercontent.com/65543240/146950475-c26beccc-c81a-49f4-912c-5bcc13b53b1a.jpeg)
 
 ### Links zu Coronaregeln
 
