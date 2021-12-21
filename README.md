@@ -21,8 +21,12 @@ Für Ideen und Fehlermeldungen bitte ein [Issue erstellen](https://github.com/ma
 
 ## Changelog
 
+### v1.11.0
+* Anzeige Booster-Impfungen ([#98](https://github.com/marcusraitner/COVID-19-Dashboard/issues/98)).
+* Anzeige Hospitalisierung verschoben, um Platz für die Booster-Impfungen zu schaffen.
+
 ### v1.10.1
-* Hospitalisierungswerte können mittels Parameter `hosp=(y|n)` ein- bzw. ausgeblendet werden (nur zusammen mit `vacc=y` möglich)
+* Hospitalisierungswerte können mittels Parameter `hosp=(y|n)` ein- bzw. ausgeblendet werden (nur zusammen mit `beds=y` möglich)
 
 ### v1.10.0
 * Hospitalisierungswerte: Zusätzlich zur Impfquote werden im rechten unteren Eck des Widgets nun die 7-Tages-Hospitalisierungsinzidenz und der Absolutwert der hospitalisierten Fälle der letzten sieben Tage des aktuellen Bundeslandes angezeigt.
@@ -34,7 +38,7 @@ Für Ideen und Fehlermeldungen bitte ein [Issue erstellen](https://github.com/ma
 
 ### v1.8.0
 * Die Darstellung der Inzidenzwerte wurde komplett überarbeitet und bietet jetzt detaillierte Informationen für die letzten Tage (konfigurierbar über den Parameter `days`) und darüberhinaus den Verlauf der Inzidenz mit schmalen Balken ([#48](https://github.com/marcusraitner/COVID-19-Dashboard/issues/48)).
-* Die Darstellung der Inzidenzwerte wurde optimiert, dass der zur Verfügung stehende Platz (insbes. mit `icu=n` oder `vac=n`) besser genutzt wird ([#55](https://github.com/marcusraitner/COVID-19-Dashboard/issues/55)).  
+* Die Darstellung der Inzidenzwerte wurde optimiert, dass der zur Verfügung stehende Platz (insbes. mit `beds=n` oder `vac=n`) besser genutzt wird ([#55](https://github.com/marcusraitner/COVID-19-Dashboard/issues/55)).  
 * In der Statuszeile ganz unten wird die Aktualität des Datenstands (der Inzidenzwerte) und die Version des Skripts angezeigt ([#54](https://github.com/marcusraitner/COVID-19-Dashboard/issues/54) und [#37](https://github.com/marcusraitner/COVID-19-Dashboard/issues/37)).
 * Für den Fall, dass morgens der Wert des aktuellen Tages (bei `frozen=y`) fehlt, wird er aus der RKI-Schnittstelle ergänzt ([#45](https://github.com/marcusraitner/COVID-19-Dashboard/issues/45)).
 * Die Paramter `rki=y` und `decimal=y` sind entfallen ([#51](https://github.com/marcusraitner/COVID-19-Dashboard/issues/51)).

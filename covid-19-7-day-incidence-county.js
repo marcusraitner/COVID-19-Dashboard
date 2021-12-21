@@ -22,8 +22,9 @@
 // * 1.10.1: Added toggle for hospitalization
 // * 1.10.2: New color in RKI Theme for incidence > 1.000 (and color for 500 adjusted to RKI Dashboard)
 // * 1.10.3: Some minor display adjustments
+// * 1.11.0: Booster quote
 
-const version = "1.10.3"
+const version = "1.11.0"
 
 //------------------------------------------------------------------------------
 // General Options Section
@@ -153,7 +154,8 @@ const bedsLineFreeColor = new Color('#4D8802', 1);
 // other colors
 const accentColor2 = Color.lightGray(); // used for weekends
 const vaccinationColor = new Color('#00848C', 1);
-const vaccinationBoosterColor = new Color('#004156', 1);
+const vaccinationSecondColor = new Color('#004156', 1);
+const vaccinationBoosterColor = new Color('#45b08c', 1);
 
 // Gradients
 let vaccinationGradient = new LinearGradient();
@@ -188,6 +190,8 @@ var bedsWidth = graphWidth;
 const bedsLineWidth = 12;
 const tickWidth = 4;
 const vaccinationWidth = 65;
+const hospitalizationWidth = 65;
+const hospitalizationHeight = 80;
 const smallSpace = 12;
 const gap = 3;
 var spaceBetweenDays = smallSpace * 5;
@@ -417,6 +421,10 @@ async function createWidget(items) {
     graphHeight += bedsHeight;
   }
 
+  if (showHospitalization) {
+    bedsWidth -= (hospitalizationWidth + 5);
+  }
+
   if (!location) {
     Location.setAccuracyToThreeKilometers();
     try {
@@ -605,7 +613,8 @@ async function createWidget(items) {
     }
 
     let quoteInitial = Math.round(vaccData.data.states[bundesLand].quote * 100);
-    let quoteBooster = Math.round(vaccData.data.states[bundesLand].secondVaccination.quote * 100);
+    let quoteSecond = Math.round(vaccData.data.states[bundesLand].secondVaccination.quote * 100);
+    let quoteBooster = Math.round(vaccData.data.states[bundesLand].boosterVaccination.quote * 100);
 
     leftStack.setPadding(7, 7, 2, 0);
     stack.addSpacer(10);
@@ -636,53 +645,17 @@ async function createWidget(items) {
     vaccinationTextRect = new Rect(10, (1 - quoteInitial / 100) * vaccinationBottom - 26, vaccinationWidth, 22);
     drawTextR(drawContext, quoteInitial + ' %', vaccinationTextRect, Color.white(), Font.regularSystemFont(22));
 
+    let vaccinationSecondRect = new Rect(0, (1 - quoteSecond / 100) * vaccinationBottom, vaccinationWidth, vaccinationBottom * quoteSecond / 100);
+    drawRoundedRect(drawContext, vaccinationSecondRect, vaccinationSecondColor, 4);
+    vaccinationTextRect = new Rect(10, (1 - quoteSecond / 100) * vaccinationBottom, vaccinationWidth, 22);
+    drawTextR(drawContext, quoteSecond + ' %', vaccinationTextRect, Color.white(), Font.regularSystemFont(22));
+
     let vaccinationBoosterRect = new Rect(0, (1 - quoteBooster / 100) * vaccinationBottom, vaccinationWidth, vaccinationBottom * quoteBooster / 100);
     drawRoundedRect(drawContext, vaccinationBoosterRect, vaccinationBoosterColor, 4);
     vaccinationTextRect = new Rect(10, (1 - quoteBooster / 100) * vaccinationBottom, vaccinationWidth, 22);
     drawTextR(drawContext, quoteBooster + ' %', vaccinationTextRect, Color.white(), Font.regularSystemFont(22));
 
     drawLine(drawContext, new Point(1, 0), new Point(1, vaccinationHeight), 2, Color.lightGray());
-
-    // Get hospitalization Datenstand
-    if (showHospitalization) {
-      if (debug) {
-        console.log("Getting hospitalization data: " + apiUrlHospitalization);
-      }
-
-      const hospitalizationData = await new Request(apiUrlHospitalization).loadJSON();
-
-      if (debug) {
-        console.log(hospitalizationData);
-      }
-
-      if (!hospitalizationData) {
-        list.addText('Keine Hospitalisierungsdaten.');
-        return list;
-      }
-
-      let hospitalizationCases7Days = hospitalizationData.data[bundesLand].hospitalization.cases7Days;
-      let hospitalizationIncidence7Days = hospitalizationData.data[bundesLand].hospitalization.incidence7Days;
-
-      let hospitalizationHeight = 100;
-      let hospitalizationTop = vaccinationBottom - hospitalizationHeight;
-
-      let hospitalizationRect = new Rect(0, hospitalizationTop, vaccinationWidth, hospitalizationHeight);
-      drawRoundedRect(drawContext, hospitalizationRect, new Color('#CBAE11'), 4);
-
-      let hospitalizationTextRect = new Rect(5, hospitalizationTop + 5, vaccinationWidth - 10, 22);
-      drawContext.setTextAlignedCenter();
-      drawTextR(drawContext, Intl.NumberFormat('de-DE', {
-        minimumFractionDigits: 2
-      }).format(hospitalizationIncidence7Days), hospitalizationTextRect, Color.white(), Font.mediumSystemFont(22));
-
-      hospitalizationTextRect = new Rect(5, hospitalizationTop + 30, vaccinationWidth - 10, 22);
-      drawContext.setTextAlignedCenter();
-      drawTextR(drawContext, hospitalizationCases7Days, hospitalizationTextRect, Color.white(), Font.mediumSystemFont(22));
-
-      hospitalizationTextRect = new Rect(10, hospitalizationTop + 52, vaccinationWidth - 10, 40);
-      drawContext.setTextAlignedLeft();
-      drawTextR(drawContext, '🚑', hospitalizationTextRect, Color.white(), Font.mediumSystemFont(36));
-    }
 
     rightStack.addImage(drawContext.getImage());
 
@@ -896,6 +869,7 @@ async function createWidget(items) {
   leftStack.addImage(graphImage);
   leftStack.addSpacer(5);
 
+  // Show ICU beds
   if (showIcu) {
     // Get data for icu beds
 
@@ -927,7 +901,7 @@ async function createWidget(items) {
     const casesBeatmet = (!diviAttr.faelle_covid_aktuell_beatmet ? 0 : diviAttr.faelle_covid_aktuell_beatmet);
 
     drawContext = new DrawContext();
-    drawContext.size = new Size(bedsWidth, bedsHeight);
+    drawContext.size = new Size(graphWidth, bedsHeight);
     drawContext.opaque = false;
 
     let freeBedsWidth = freeBeds / beds * bedsWidth;
@@ -992,14 +966,55 @@ async function createWidget(items) {
     }
 
     drawContext.drawTextInRect(c19Label, covidRect);
+
+    // Get hospitalization Datenstand
+    if (showHospitalization) {
+      if (debug) {
+        console.log("Getting hospitalization data: " + apiUrlHospitalization);
+      }
+
+      const hospitalizationData = await new Request(apiUrlHospitalization).loadJSON();
+
+      if (debug) {
+        console.log(hospitalizationData);
+      }
+
+      if (!hospitalizationData) {
+        list.addText('Keine Hospitalisierungsdaten.');
+        return list;
+      }
+
+      let hospitalizationCases7Days = hospitalizationData.data[bundesLand].hospitalization.cases7Days;
+      let hospitalizationIncidence7Days = hospitalizationData.data[bundesLand].hospitalization.incidence7Days;
+      let offset = bedsWidth + 5;
+
+      let hospitalizationRect = new Rect(offset, 0, hospitalizationWidth, hospitalizationHeight);
+      drawRoundedRect(drawContext, hospitalizationRect, new Color('#CBAE11'), 4);
+
+      let hospitalizationTextRect = new Rect(offset + 5, 3, hospitalizationWidth - 10, 22);
+      drawContext.setTextAlignedCenter();
+      drawTextR(drawContext, Intl.NumberFormat('de-DE', {
+        minimumFractionDigits: 2
+      }).format(hospitalizationIncidence7Days), hospitalizationTextRect, Color.white(), Font.mediumSystemFont(22));
+
+      hospitalizationTextRect = new Rect(offset + 5, 28, hospitalizationWidth - 10, 22);
+      drawContext.setTextAlignedCenter();
+      drawTextR(drawContext, hospitalizationCases7Days, hospitalizationTextRect, Color.white(), Font.mediumSystemFont(22));
+
+      hospitalizationTextRect = new Rect(offset + 5, 53, hospitalizationWidth - 10, 40);
+      // drawContext.setTextAlignedLeft();
+      drawTextR(drawContext, '🏥' + bundesLand, hospitalizationTextRect, Color.white(), Font.mediumSystemFont(22));
+    }
+
     leftStack.addImage(drawContext.getImage());
   }
+
 
   // leftStack.addSpacer(3);
   let statusStack = leftStack.addStack();
   statusStack.layoutHorizontally();
   statusStack.setPadding(0, 0, 0, 0);
-  statusStack.addSpacer();
+  // statusStack.addSpacer();
   let statusText = statusStack.addText("Datenstand: " + new Intl.DateTimeFormat('de-DE', {
     year: 'numeric',
     month: 'numeric',
