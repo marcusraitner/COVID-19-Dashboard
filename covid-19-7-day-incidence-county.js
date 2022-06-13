@@ -23,15 +23,15 @@
 // * 1.10.2: New color in RKI Theme for incidence > 1.000 (and color for 500 adjusted to RKI Dashboard)
 // * 1.10.3: Some minor display adjustments
 // * 1.11.0: Booster quote
+// * 1.12.0: Second Booster quote
 
-const version = "1.11.0"
+const version = "1.12.0"
 
 //------------------------------------------------------------------------------
 // General Options Section
 //------------------------------------------------------------------------------
 
 // Set to true for debugging information in the console
-const debug = false;
 
 // Set to true for an image background, false for no image.
 const imageBackground = false;
@@ -67,7 +67,7 @@ var showBl = true;
 var theme = "original";
 
 // Show Hospitalization
-var showHospitalization = true;
+var showHospitalization = false;
 
 // palette found here: https://coolors.co/03071e-370617-6a040f-9d0208-d00000-dc2f02-e85d04-f48c06-faa307-ffba08
 const incidenceColors = {
@@ -156,6 +156,7 @@ const accentColor2 = Color.lightGray(); // used for weekends
 const vaccinationColor = new Color('#00848C', 1);
 const vaccinationSecondColor = new Color('#004156', 1);
 const vaccinationBoosterColor = new Color('#45b08c', 1);
+const SecondVaccinationBoosterColor = new Color('#2F5233', 1);
 
 // Gradients
 let vaccinationGradient = new LinearGradient();
@@ -615,6 +616,7 @@ async function createWidget(items) {
     let quoteInitial = Math.round(vaccData.data.states[bundesLand].quote * 100);
     let quoteSecond = Math.round(vaccData.data.states[bundesLand].secondVaccination.quote * 100);
     let quoteBooster = Math.round(vaccData.data.states[bundesLand].boosterVaccination.quote * 100);
+    let quoteSecondBooster = Math.round(vaccData.data.states[bundesLand]["2ndBoosterVaccination"].quote * 100);
 
     leftStack.setPadding(7, 7, 2, 0);
     stack.addSpacer(10);
@@ -654,6 +656,11 @@ async function createWidget(items) {
     drawRoundedRect(drawContext, vaccinationBoosterRect, vaccinationBoosterColor, 4);
     vaccinationTextRect = new Rect(10, (1 - quoteBooster / 100) * vaccinationBottom, vaccinationWidth, 22);
     drawTextR(drawContext, quoteBooster + ' %', vaccinationTextRect, Color.white(), Font.regularSystemFont(22));
+
+    let vaccination2ndBoosterRect = new Rect(0, (1 - quoteSecondBooster / 100) * vaccinationBottom, vaccinationWidth, vaccinationBottom * quoteSecondBooster / 100);
+    drawRoundedRect(drawContext, vaccination2ndBoosterRect, SecondVaccinationBoosterColor, 4);
+    vaccinationTextRect = new Rect(10, (1 - quoteSecondBooster / 100) * vaccinationBottom - 26, vaccinationWidth, 22);
+    drawTextR(drawContext, quoteSecondBooster + ' %', vaccinationTextRect, Color.white(), Font.regularSystemFont(22));
 
     drawLine(drawContext, new Point(1, 0), new Point(1, vaccinationHeight), 2, Color.lightGray());
 
