@@ -2,7 +2,7 @@
 
 Dieses [Scriptable](https://scriptable.app)-Skript erzeugt ein Widget, das den Verlauf der 7-Tage-Inzidenz und die Auslastung der Intensivbetten am aktuellen Standort innerhalb Deutschlands anzeigt. Zusätzlich angezeigt wird der aktuelle Wert der 7-Tage-Inzidenz des zugehörigen Bundeslandes und der Impfstatus des Bundeslandes. Optional (Paramter `de=y`) kann auch der Inzidenzwert von Deutschland und der R-Wert für Deutschland angezeigt werden. Hier ein Beispiel für den Landkreis Ebersberg im neuen RKI-Theme (`theme=rki`):
 
-![IMG_0362](https://user-images.githubusercontent.com/65543240/146953815-0cb7181d-89b8-42ec-91c5-b9714bd4b49d.jpeg)
+![IMG_1629](https://user-images.githubusercontent.com/65543240/173426422-0aab6969-91b0-4c49-b86b-40ad4e11d510.jpeg)
 
 Derzeit gibt es das Widget nur in diesem mittelgroßen Format.
 
