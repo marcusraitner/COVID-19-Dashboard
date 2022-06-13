@@ -17,6 +17,9 @@ Für Ideen und Fehlermeldungen bitte ein [Issue erstellen](https://github.com/ma
 
 ## Changelog
 
+### v1.12.0
+* Anzeige zweite Booster-Impfungen
+
 ### v1.11.0
 * Anzeige Booster-Impfungen ([#98](https://github.com/marcusraitner/COVID-19-Dashboard/issues/98)).
 * Anzeige Hospitalisierung verschoben, um Platz für die Booster-Impfungen zu schaffen.
