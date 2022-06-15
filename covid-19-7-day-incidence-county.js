@@ -32,6 +32,7 @@ const version = "1.12.0"
 //------------------------------------------------------------------------------
 
 // Set to true for debugging information in the console
+const debug = false;
 
 // Set to true for an image background, false for no image.
 const imageBackground = false;
